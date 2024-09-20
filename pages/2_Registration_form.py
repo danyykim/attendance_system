@@ -16,9 +16,8 @@ registration_form = face_rec.RegistrationForm()
 # form
 person_name = st.text_input(label='Name',placeholder='First & Last Name')
 role = st.selectbox(label='Select your Role',options=('Student',
-                                                      'Teacher',
-                                                      'Test'), index=0)
-ic_number = st.number_input(label='IC Number', placeholder='Enter your 12-digit IC Number')
+                                                      'Teacher'))
+ic_number = st.text_input(label='IC Number', placeholder='Enter your 12-digit IC Number')
 
 # Validate IC number
 if len(str(ic_number)) != 12:
