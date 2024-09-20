@@ -14,15 +14,16 @@ registration_form = face_rec.RegistrationForm()
 
 # Step-1: Collect person name and role
 # form
-person_name = st.text_input(label='Name',placeholder='First & Last Name')
+person_name = st.text_input(label='Name',placeholder='First & Last Name', required=True)
 role = st.selectbox(label='Select your Role',options=('Student',
                                                       'Teacher',
-                                                      'Test'))
-ic_number = st.text_input(label='IC Number', placeholder='Enter your 12-digit IC Number')
+                                                      'Test'), index=0)
+ic_number = st.number_input(label='IC Number', placeholder='Enter your 12-digit IC Number', required=True)
 
 # Validate IC number
-def is_valid_ic(ic):
-    return ic.isdigit() and len(ic) == 12
+if len(str(ic_number)) != 12:
+    st.error("IC Number must be exactly 12 digits.")
+
 
 # step-2: Collect facial embedding of that person
 def video_callback_func(frame):
