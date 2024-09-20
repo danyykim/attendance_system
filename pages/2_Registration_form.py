@@ -43,18 +43,15 @@ rtc_configuration={
 
 
 # step-3: save the data in redis database
-
-
+        
 if st.button('Submit'):
-    if not is_valid_ic(ic_number):
-        st.error('IC Number must be exactly 12 digits.')
-    else:
-        return_val = registration_form.save_data_in_redis_db(person_name,role)
+    if person_name and role and ic_number and len(ic_number) == 12 and ic_number.isdigit():
+        return_val = registration_form.save_data_in_redis_db(person_name, role, ic_number)
         if return_val == True:
-          st.success(f"{person_name} registered sucessfully")
+            st.success(f"{person_name} registered successfully")
         elif return_val == 'name_false':
-          st.error('Please enter the name: Name cannot be empty or spaces')
-        
+            st.error('Please enter the name: Name cannot be empty or spaces')
         elif return_val == 'file_false':
-          st.error('face_embedding.txt is not found. Please refresh the page and execute again.')
-        
+            st.error('face_embedding.txt is not found. Please refresh the page and execute again.')
+    else:
+        st.error("Please fill all required fields correctly.")
