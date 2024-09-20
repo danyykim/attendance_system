@@ -17,7 +17,11 @@ registration_form = face_rec.RegistrationForm()
 person_name = st.text_input(label='Name',placeholder='First & Last Name')
 role = st.selectbox(label='Select your Role',options=('Student',
                                                       'Teacher'))
+ic_number = st.text_input(label='IC Number', placeholder='Enter your 12-digit IC Number')
 
+# Validate IC number
+def is_valid_ic(ic):
+    return ic.isdigit() and len(ic) == 12
 
 # step-2: Collect facial embedding of that person
 def video_callback_func(frame):
@@ -41,7 +45,10 @@ rtc_configuration={
 
 
 if st.button('Submit'):
-    return_val = registration_form.save_data_in_redis_db(person_name,role)
+    if not is_valid_ic(ic_number):
+        st.error('IC Number must be exactly 12 digits.')
+    else:
+        return_val = registration_form.save_data_in_redis_db(person_name,role)
     if return_val == True:
         st.success(f"{person_name} registered sucessfully")
     elif return_val == 'name_false':

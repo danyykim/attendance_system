@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import cv2
-
 import redis
 
 # insight face
@@ -168,7 +167,7 @@ class RegistrationForm:
             
         return frame, embeddings
     
-    def save_data_in_redis_db(self,name,role):
+    def save_data_in_redis_db(self,name,role,ic_number):
         # validation name
         if name is not None:
             if name.strip() != '':
@@ -177,6 +176,8 @@ class RegistrationForm:
                 return 'name_false'
         else:
             return 'name_false'
+        
+        #validation
         
         # if face_embedding.txt exists
         if 'face_embedding.txt' not in os.listdir():
