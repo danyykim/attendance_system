@@ -9,15 +9,15 @@ import av
 # st.set_page_config(page_title='Registration Form')
 st.subheader('Registration Form')
 
+## init registration form
+registration_form = face_rec.RegistrationForm()
+
 if 'person_name' not in st.session_state:
     st.session_state.person_name = ''
 if 'role' not in st.session_state:
     st.session_state.role = 'Student'
 if 'ic_number' not in st.session_state:
     st.session_state.ic_number = ''
-
-## init registration form
-registration_form = face_rec.RegistrationForm()
 
 # Step-1: Collect person name and role
 # form
