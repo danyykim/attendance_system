@@ -59,7 +59,7 @@ if st.button('Submit'):
             st.session_state.person_name = ''
             st.session_state.role = 'Student'
             st.session_state.ic_number = ''
-            st.experimental_rerun()
+            st.experimental_set_query_params()
         elif return_val == 'name_false':
             st.error('Please enter the name: Name cannot be empty or spaces')
         elif return_val == 'file_false':
