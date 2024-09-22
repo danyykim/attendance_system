@@ -20,11 +20,13 @@ waitTime = 30 # time in sec
 setTime = time.time()
 realtimepred = face_rec.RealTimePred() # real time prediction class
 
+last_recognized_person = st.empty()  # This will store the last recognized person
+previous_name = None  # Variable to store the previous recognized name
 # Real Time Prediction
 # streamlit webrtc
 # callback function
 def video_frame_callback(frame):
-    global setTime
+    global setTime, previous_name
     
     img = frame.to_ndarray(format="bgr24") # 3 dimension numpy array
     # operation that you can perform on the array
@@ -38,6 +40,10 @@ def video_frame_callback(frame):
         setTime = time.time() # reset time        
         print('Save Data to redis database')
     
+    current_name = realtimepred.logs['name'][-1] if realtimepred.logs['name'] else None
+    if current_name and current_name != previous_name and current_name != "Unknown":
+        last_recognized_person.success(f"User {current_name} recognized successfully!")  # Display success message
+        previous_name = current_name  # Update the previous recognized name
 
     return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
