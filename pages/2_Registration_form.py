@@ -21,10 +21,10 @@ with st.form(key='myform',clear_on_submit=True):
    ic_number = st.text_input(label='IC Number', placeholder='Enter your 12-digit IC Number')
 
 # Validate IC number
-if len(str(ic_number)) != 12:
-    st.error("IC Number must be exactly 12 digits.")
+   if len(str(ic_number)) != 12:
+     st.error("IC Number must be exactly 12 digits.")
 
-submit_button = st.form_submit_button(label='Submit')
+   submit_button = st.form_submit_button(label='Submit')
 
 # step-2: Collect facial embedding of that person
 def video_callback_func(frame):
