@@ -12,18 +12,13 @@ st.subheader('Registration Form')
 ## init registration form
 registration_form = face_rec.RegistrationForm()
 
-if 'person_name' not in st.session_state:
-    st.session_state.person_name = ''
-if 'role' not in st.session_state:
-    st.session_state.role = 'Student'
-if 'ic_number' not in st.session_state:
-    st.session_state.ic_number = ''
-
 # Step-1: Collect person name and role
 # form
-person_name = st.text_input(label='Name', placeholder='First & Last Name', value=st.session_state.person_name)
-role = st.selectbox(label='Select your Role', options=('Student', 'Teacher'), index=0 if st.session_state.role == 'Student' else 1)
-ic_number = st.text_input(label='IC Number', placeholder='Enter your 12-digit IC Number', value=st.session_state.ic_number)
+with st.form(key='myform',clear_on_submit=True):
+   person_name = st.text_input(label='Name',placeholder='First & Last Name')
+   role = st.selectbox(label='Select your Role',options=('Student',
+                                                      'Teacher'))
+   ic_number = st.text_input(label='IC Number', placeholder='Enter your 12-digit IC Number')
 
 # Validate IC number
 if len(str(ic_number)) != 12:
@@ -49,6 +44,7 @@ rtc_configuration={
 
 
 # step-3: save the data in redis database
+           #reset
         
 if st.button('Submit'):
     if person_name and role and ic_number and len(ic_number) == 12 and ic_number.isdigit():
@@ -56,10 +52,6 @@ if st.button('Submit'):
         if return_val == True:
             st.success(f"{person_name} registered successfully")
            #reset
-            st.session_state.person_name = ''
-            st.session_state.role = 'Student'
-            st.session_state.ic_number = ''
-            st.query_params()
         elif return_val == 'name_false':
             st.error('Please enter the name: Name cannot be empty or spaces')
         elif return_val == 'file_false':
