@@ -24,6 +24,7 @@ with st.form(key='myform',clear_on_submit=True):
 if len(str(ic_number)) != 12:
     st.error("IC Number must be exactly 12 digits.")
 
+submit_button = st.form_submit_button(label='Submit')
 
 # step-2: Collect facial embedding of that person
 def video_callback_func(frame):
@@ -46,7 +47,7 @@ rtc_configuration={
 # step-3: save the data in redis database
            #reset
         
-if st.button('Submit'):
+if submit_button:
     if person_name and role and ic_number and len(ic_number) == 12 and ic_number.isdigit():
         return_val = registration_form.save_data_in_redis_db(person_name, role, ic_number)
         if return_val == True:
