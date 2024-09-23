@@ -31,7 +31,7 @@ if authentication_status == None:
 if authentication_status:
 
     authenticator.logout("Logout", "sidebar")
-    st.sidebar.header(f"Welcome {name}")
+    st._main.header(f"Welcome {name}")
     st.header('Attendance System using Face Recognition')
 
     with st.spinner("Loading Models and Connecting to Redis db ..."):
