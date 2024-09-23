@@ -32,7 +32,6 @@ if authentication_status:
 
     authenticator.logout("Logout", "sidebar")
     st.sidebar.title(f"Welcome {name}")
-    st.sidebar.header("Home")
     st.header('Attendance System using Face Recognition')
 
     with st.spinner("Loading Models and Connecting to Redis db ..."):
