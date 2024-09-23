@@ -13,8 +13,6 @@ from datetime import datetime
 import os
 
 
-
-
 # Connect to Redis Client
 hostname = 'redis-10380.c240.us-east-1-3.ec2.redns.redis-cloud.com'
 portnumber = '10380'
@@ -34,7 +32,7 @@ def retrive_data(name):
     retrive_series.index = index
     retrive_df =  retrive_series.to_frame().reset_index()
     retrive_df.columns = ['name_role','facial_features']
-    retrive_df[['Name','Role', 'IC']] = retrive_df['name_role'].apply(lambda x: x.split('@')).apply(pd.Series)
+    retrive_df[['Name','Role','IC']] = retrive_df['name_role'].apply(lambda x: x.split('@')).apply(pd.Series)
     return retrive_df[['Name','Role','IC','facial_features']]
 
 
