@@ -34,8 +34,8 @@ def retrive_data(name):
     retrive_series.index = index
     retrive_df =  retrive_series.to_frame().reset_index()
     retrive_df.columns = ['name_role','facial_features']
-    retrive_df[['Name','Role']] = retrive_df['name_role'].apply(lambda x: x.split('@')).apply(pd.Series)
-    return retrive_df[['Name','Role','facial_features']]
+    retrive_df[['Name','Role', 'IC']] = retrive_df['name_role'].apply(lambda x: x.split('@')).apply(pd.Series)
+    return retrive_df[['Name','Role','IC','facial_features']]
 
 
 # configure face analysis
