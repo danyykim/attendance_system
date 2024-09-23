@@ -35,7 +35,7 @@ if authentication_status:
     st.header('Attendance System using Face Recognition')
 
     with st.spinner("Loading Models and Connecting to Redis db ..."):
-        import face_rec
+        from . import face_rec
             
         st.success('Model loaded sucesfully')
         st.success('Redis db sucessfully connected')
