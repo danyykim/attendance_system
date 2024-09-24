@@ -205,6 +205,8 @@ class RegistrationForm:
         # step-1: load "face_embedding.txt"
         x_array = np.loadtxt('face_embedding.txt',dtype=np.float32) # flatten array            
         
+        if x_array.size % 512 != 0:
+            return 'Invalid embedding size'
         # step-2: convert into array (proper shape)
         received_samples = int(x_array.size/512)
         x_array = x_array.reshape(received_samples,512)
@@ -213,6 +215,10 @@ class RegistrationForm:
         # step-3: cal. mean embeddings
         x_mean = x_array.mean(axis=0)
         x_mean = x_mean.astype(np.float32)
+        
+        if x_mean.size != 512:
+            return 'Invalid mean embedding size'
+        
         x_mean_bytes = x_mean.tobytes()
         
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
