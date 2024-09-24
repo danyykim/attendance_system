@@ -32,7 +32,17 @@ def retrive_data(name):
     retrive_series.index = index
     retrive_df =  retrive_series.to_frame().reset_index()
     retrive_df.columns = ['name_role','facial_features']
-    retrive_df[['Name','Role','IC']] = retrive_df['name_role'].apply(lambda x: x.split('@')).apply(pd.Series)
+    
+    def safe_split(x):
+        parts = x.split("@")
+        if len(parts) == 3:
+            return parts
+        elif len(parts) == 2:
+            return parts + ['Unknown']
+        else:
+            return['Unknown','Unknown','Unknown']
+        
+    retrive_df[['Name','Role','IC']] = retrive_df['name_role'].apply(safe_split).apply(pd.Series)
     return retrive_df[['Name','Role','IC','facial_features']]
 
 

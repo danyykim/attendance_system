@@ -29,8 +29,6 @@ else:
     st.header('Attendance System using Face Recognition')
 
     # Add navigation links to the sidebar
-  
-
     with st.spinner("Loading Models and Connecting to Redis db ..."):
         st.success('Model loaded successfully')
         st.success('Redis db successfully connected')
