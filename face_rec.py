@@ -25,6 +25,9 @@ r = redis.StrictRedis(host=hostname,
 # Retrive Data from database
 def retrive_data(name):
     retrive_dict= r.hgetall(name)
+    if not retrive_dict:  # Check if the retrieved dictionary is empty
+        # Return an empty DataFrame with the expected columns
+        return pd.DataFrame(columns=['Name', 'Role', 'IC', 'facial_features'])
     retrive_series = pd.Series(retrive_dict)
     retrive_series = retrive_series.apply(lambda x: np.frombuffer(x,dtype=np.float32))
     index = retrive_series.index
