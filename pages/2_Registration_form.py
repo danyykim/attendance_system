@@ -42,7 +42,6 @@ if st.button('Submit'):
         if return_val:
             st.success(f"{person_name} registered successfully")
             # Reset input fields
-            st.experimental_rerun()
         elif return_val == 'name_false':
             st.error('Please enter the name: Name cannot be empty or spaces')
         elif return_val == 'file_false':
