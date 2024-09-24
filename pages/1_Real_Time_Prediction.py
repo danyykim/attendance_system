@@ -4,6 +4,9 @@ from streamlit_webrtc import webrtc_streamer
 import av
 import time
 
+if not st.session_state.get("authentication_status", False):
+    st.warning("You must log in first.")
+    st.stop()
 # st.set_page_config(page_title='Predictions')
 st.subheader('Real-Time Attendance System')
 

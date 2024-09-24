@@ -5,6 +5,10 @@ import numpy as np
 from streamlit_webrtc import webrtc_streamer
 import av
 
+if not st.session_state.get("authentication_status", False):
+    st.warning("You must log in first.")
+    st.stop()
+
 st.subheader('Registration Form')
 
 # Initialize registration form

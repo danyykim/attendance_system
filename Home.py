@@ -28,6 +28,9 @@ else:
     st.header(f"Welcome {name}")
     st.header('Attendance System using Face Recognition')
 
+    st.sidebar.title("Navigation")
+    st.sidebar.write("[Go to Registration Page](2_Registration_form.py)")
+    st.sidebar.write("[Go to Report Page](3_Report.py)")
     # Add navigation links to the sidebar
     with st.spinner("Loading Models and Connecting to Redis db ..."):
         st.success('Model loaded successfully')
