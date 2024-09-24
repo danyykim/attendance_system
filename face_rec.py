@@ -218,7 +218,8 @@ class RegistrationForm:
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         # step-4: save this into redis database
         # redis hashes
-        r.hset(name='academy:register',key=key,value=(x_mean_bytes, timestamp))
+        r.hset(name='academy:register',key=key,value=x_mean_bytes)
+        r.hset(name='academy:register', key=f"{key}_timestamp", value=timestamp)
         
         # 
         os.remove('face_embedding.txt')
