@@ -24,33 +24,52 @@ r = redis.StrictRedis(host=hostname,
 
 # Retrive Data from database
 def retrive_data(name):
-    retrive_dict= r.hgetall(name)
+    retrive_dict = r.hgetall(name)
+    
+    if not retrive_dict:  # Check if the retrieved dictionary is empty
+        # Return an empty DataFrame with the expected columns
+        return pd.DataFrame(columns=['Name', 'Role', 'IC', 'facial_features', 'timestamp'])
+    
+    # Convert the retrieved data to a Series
     retrive_series = pd.Series(retrive_dict)
-    retrive_series = retrive_series.apply(lambda x: np.frombuffer(x,dtype=np.float32))
-    timestamps = [x[1] for x in retrive_dict.values()]
-    index = retrive_series.index
-    index = list(map(lambda x: x.decode(), index))
-    retrive_series.index = index
-    retrive_df =  retrive_series.to_frame().reset_index()
-    retrive_df.columns = ['name_role','facial_features']
     
-    retrive_df['timestamp'] = timestamps
-    
+    # Lists to hold the processed data
+    embeddings = []
+    timestamps = []
+    name_role_pairs = []
+
+    # Iterate through the retrieved dictionary
+    for key, value in retrive_dict.items():
+        if value is not None:  # Ensure the value is not None
+            # Assuming the value is a bytes object containing embedding and timestamp
+            embedding, timestamp = value  # Unpack as a tuple
+            embeddings.append(np.frombuffer(embedding, dtype=np.float32))
+            timestamps.append(timestamp.decode('utf-8'))  # Decode timestamp if needed
+            name_role_pairs.append(key.decode('utf-8'))  # Decode name_role key
+
+    # Create a DataFrame from the embeddings
+    retrive_df = pd.DataFrame(embeddings)
+
+    # Split name and role
+    retrive_df['name_role'] = name_role_pairs
     def safe_split(x):
         parts = x.split("@")
-        if len(parts) == 3:
-            return parts
-        elif len(parts) == 2:
+        if len(parts) == 2:
             return parts + ['Unknown']
         else:
-            return['Unknown','Unknown','Unknown']
-        
-    retrive_df[['Name','Role','IC']] = retrive_df['name_role'].apply(safe_split).apply(pd.Series)
-    
-    retrive_df.index = retrive_df.index + 1
-    retrive_df = retrive_df.sort_values(by='timestamp', ascending=False, inplace=True)
-    
-    return retrive_df[['Name','Role','IC','facial_features', 'timestamp']]
+            return ['Unknown', 'Unknown', 'Unknown']
+
+    # Create separate columns for Name, Role, and IC
+    retrive_df[['Name', 'Role', 'IC']] = retrive_df['name_role'].apply(safe_split).apply(pd.Series)
+
+    # Add timestamps to the DataFrame
+    retrive_df['timestamp'] = timestamps
+
+    # Sort by timestamp
+    retrive_df.sort_values(by='timestamp', ascending=False, inplace=True)
+
+    return retrive_df[['Name', 'Role', 'IC', 'facial_features', 'timestamp']]
+
 
 
 # configure face analysis
