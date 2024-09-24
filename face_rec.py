@@ -179,7 +179,7 @@ class RegistrationForm:
         # validation name
         if name is not None:
             if name.strip() != '':
-                key = f'{name}@{role}'
+                key = f'{name}@{role}@{ic_number}'
             else:
                 return 'name_false'
         else:
