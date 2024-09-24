@@ -1,5 +1,6 @@
 import streamlit as st 
 from Home import face_rec
+import pandas as pd
 st.set_page_config(page_title='Reporting',layout='wide')
 st.subheader('Reporting')
 
@@ -19,7 +20,11 @@ with tab1:
         # Retrive the data from Redis Database
         with st.spinner('Retriving Data from Redis DB ...'):    
             redis_face_db = face_rec.retrive_data(name='academy:register')
-            st.dataframe(redis_face_db[['Name','Role', 'IC']])
+          
+            if len(redis_face_db['Name']) == len(redis_face_db['Role']) == len(redis_face_db['IC']):
+                st.dataframe(redis_face_db[['Name', 'Role', 'IC']])
+            else:
+                st.error("Data inconsistency: Column lengths do not match!")
 
 with tab2:
     if st.button('Refresh Logs'):
