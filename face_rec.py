@@ -25,19 +25,13 @@ r = redis.StrictRedis(host=hostname,
 # Retrive Data from database
 def retrive_data(name):
     retrive_dict= r.hgetall(name)
-    if not retrive_dict:  # Check if retrive_dict is empty
-        return pd.DataFrame(columns=['Name', 'Role', 'IC', 'facial_features', 'timestamp'])
-    
     retrive_series = pd.Series(retrive_dict)
     retrive_series = retrive_series.apply(lambda x: np.frombuffer(x,dtype=np.float32))
-    timestamps = [x[1] for x in retrive_dict.values()]
     index = retrive_series.index
     index = list(map(lambda x: x.decode(), index))
     retrive_series.index = index
     retrive_df =  retrive_series.to_frame().reset_index()
     retrive_df.columns = ['name_role','facial_features']
-    
-    retrive_df['timestamp'] = timestamps
     
     def safe_split(x):
         parts = x.split("@")
@@ -51,9 +45,9 @@ def retrive_data(name):
     retrive_df[['Name','Role','IC']] = retrive_df['name_role'].apply(safe_split).apply(pd.Series)
     
     retrive_df.index = retrive_df.index + 1
-    retrive_df = retrive_df.sort_values(by='timestamp', ascending=False, inplace=False)
+    retrive_df = retrive_df.sort_values(by='IC', ascending=False)
     
-    return retrive_df[['Name','Role','IC','facial_features', 'timestamp']]
+    return retrive_df[['Name','Role','IC','facial_features']]
 
 
 # configure face analysis
@@ -205,26 +199,19 @@ class RegistrationForm:
         # step-1: load "face_embedding.txt"
         x_array = np.loadtxt('face_embedding.txt',dtype=np.float32) # flatten array            
         
-        if x_array.size % 512 != 0:
-            return 'Invalid embedding size'
         # step-2: convert into array (proper shape)
         received_samples = int(x_array.size/512)
         x_array = x_array.reshape(received_samples,512)
+        x_array = np.asarray(x_array)       
         
         # step-3: cal. mean embeddings
         x_mean = x_array.mean(axis=0)
         x_mean = x_mean.astype(np.float32)
-        
-        if x_mean.size != 512:
-            return 'Invalid mean embedding size'
-        
         x_mean_bytes = x_mean.tobytes()
         
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         # step-4: save this into redis database
         # redis hashes
         r.hset(name='academy:register',key=key,value=x_mean_bytes)
-        r.hset(name='academy:register', key=f"{key}_timestamp", value=timestamp)
         
         # 
         os.remove('face_embedding.txt')
