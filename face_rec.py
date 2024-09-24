@@ -210,7 +210,6 @@ class RegistrationForm:
         # step-2: convert into array (proper shape)
         received_samples = int(x_array.size/512)
         x_array = x_array.reshape(received_samples,512)
-        x_array = np.asarray(x_array)       
         
         # step-3: cal. mean embeddings
         x_mean = x_array.mean(axis=0)
