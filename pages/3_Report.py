@@ -60,7 +60,7 @@ with tab3:
     # In time: At which person is first detected in that day(min Timestamp of the date)
     # Out Time: At which person is last detected in that day(min Timestamp of the date)
     
-    report_df = logs_df.groupby(by=['Date','Name','Role']).agg(
+    report_df = logs_df.groupby(by=['Date','Name','Role','IC']).agg(
         In_time = pd.NamedAgg('Timestamp','min'), #in time
         Out_time = pd.NamedAgg('Timestamp','max'), # out time
     ).reset_index()
