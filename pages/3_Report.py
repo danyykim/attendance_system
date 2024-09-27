@@ -65,4 +65,8 @@ with tab3:
         Out_time = pd.NamedAgg('Timestamp','max'), # out time
     ).reset_index()
     
+    report_df['In_time'] = pd.to_datetime(report_df['In_time'])
+    report_df['Out_time'] = pd.to_datetime(report_df['Out_time'])
+
+    report_df['Duration'] = report_df['Out_time'] - report_df['In_time']
     st.dataframe(report_df)
