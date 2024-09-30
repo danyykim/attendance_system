@@ -4,14 +4,13 @@ import cv2
 import redis
 
 # insight face
-from insightface.app import FaceAnalysis
+from insightface.app import face_analysis
 from sklearn.metrics import pairwise
 # time
 import time
 from datetime import datetime
 
 import os
-
 
 # Connect to Redis Client
 hostname = 'redis-10380.c240.us-east-1-3.ec2.redns.redis-cloud.com'
