@@ -27,8 +27,6 @@ realtimepred = face_rec.RealTimePred() # real time prediction class
 # streamlit webrtc
 # callback function
 
-marked_students = set()
-
 def video_frame_callback(frame):
     global setTime
     
@@ -44,16 +42,6 @@ def video_frame_callback(frame):
         realtimepred.saveLogs_redis()
         setTime = time.time() # reset time        
         print('Save Data to redis database')
-        
-    if recognized_name:
-        if recognized_name in marked_students:
-            st.warning(f"{recognized_name} is already marked for attendance. ")
-        else:
-            marked_students.add(recognized_name)
-            st.success(f"Attendance marked for {recognized_name}!")
-            # Display student details
-            st.write(f"Student Name: {recognized_name}")
-            # You can display additional details like IC Number, etc.
 
     return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
