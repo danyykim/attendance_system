@@ -11,10 +11,6 @@ if not st.session_state.get("authentication_status", False):
 
 st.subheader('Real-Time Attendance System')
 
-# Sidebar for displaying notifications
-sidebar = st.sidebar
-sidebar.header("Attendance Notifications")
-
 # Retrieve the data from Redis Database
 with st.spinner('Retrieving Data from Redis DB ...'):    
     redis_face_db = face_rec.retrive_data(name='academy:register')
@@ -55,40 +51,34 @@ def video_frame_callback(frame):
         setTime = time.time()  # Reset time
         print('Logs saved to Redis database')
 
-    # Sidebar notification logic for attendance marking
-    with sidebar:
-        if recognized_name and recognized_name != "Unknown":
-            if last_recognized_student is None or last_recognized_student != recognized_name:
-                # New student recognized, display their details and mark attendance
-                last_recognized_student = recognized_name
-                marked_students = set()
-                marked_students.add(recognized_name)
-
-                # Get additional student details from Redis
-                student_data = redis_face_db[redis_face_db['Name'] == recognized_name]
-                if not student_data.empty:
-                    role = student_data.iloc[0]['Role']
-                    ic_number = student_data.iloc[0]['IC']
-                    sidebar.success(f"Attendance marked for {recognized_name}!")
-                    sidebar.write(f"Student Name: {recognized_name}")
-                    sidebar.write(f"Role: {role}")
-                    sidebar.write(f"IC Number: {ic_number}")
-                else:
-                    sidebar.error("Student details not found in the database.")
-            else:
-                # Same student recognized again, show 'already marked' message
-                sidebar.warning(f"{recognized_name} has already been marked for attendance.")
-        else:
-            sidebar.info("No face recognized. Waiting for scan...")
-
     # Return the video frame with the predicted result (or original frame in case of error)
     return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
 # Start WebRTC video stream with callback
-webrtc_streamer(
+webrtc_ctx = webrtc_streamer(
     key="realtimePrediction", 
     video_frame_callback=video_frame_callback,
     rtc_configuration={
         "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
     }
 )
+
+# Notification section (placed **below** the camera feed)
+if webrtc_ctx.state.playing:
+    st.markdown("---")
+    st.subheader("Attendance Notification")
+
+    # Display student details and handle attendance marking below the camera
+    if last_recognized_student is not None:
+        student_data = redis_face_db[redis_face_db['Name'] == last_recognized_student]
+        if not student_data.empty:
+            role = student_data.iloc[0]['Role']
+            ic_number = student_data.iloc[0]['IC']
+            st.success(f"Attendance marked for {last_recognized_student}!")
+            st.write(f"Student Name: {last_recognized_student}")
+            st.write(f"Role: {role}")
+            st.write(f"IC Number: {ic_number}")
+        else:
+            st.error("Student details not found in the database.")
+    else:
+        st.info("No face recognized. Waiting for scan...")
