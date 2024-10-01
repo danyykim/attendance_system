@@ -15,7 +15,7 @@ st.subheader('Real-Time Attendance System')
 with st.spinner('Retrieving Data from Redis DB ...'):    
     redis_face_db = face_rec.retrive_data(name='academy:register')
     st.dataframe(redis_face_db)
-    
+
 st.success("Data successfully retrieved from Redis")
 
 # Time management
@@ -30,11 +30,17 @@ last_recognized_student = None
 def video_frame_callback(frame):
     global setTime, last_recognized_student
     
-    img = frame.to_ndarray(format="bgr24")  # Convert frame to NumPy array
+    # Convert frame to NumPy array (for image processing)
+    img = frame.to_ndarray(format="bgr24")
     
     # Perform face prediction (returns processed image and recognized name)
-    pred_img, recognized_name = realtimepred.face_prediction(
-        img, redis_face_db, 'facial_features', ['Name', 'Role'], thresh=0.5)
+    try:
+        pred_img, recognized_name = realtimepred.face_prediction(
+            img, redis_face_db, 'facial_features', ['Name', 'Role'], thresh=0.5)
+    except Exception as e:
+        st.error(f"Error during face recognition: {e}")
+        pred_img = img  # Fallback: If there's an error, return the original frame
+        recognized_name = None
 
     # Get the current time and check if it's time to save the logs
     timenow = time.time()
@@ -45,7 +51,7 @@ def video_frame_callback(frame):
         setTime = time.time()  # Reset time
         print('Logs saved to Redis database')
 
-    # Display student details and handle attendance
+    # Display student details and handle attendance marking
     if recognized_name and recognized_name != "Unknown":
         if last_recognized_student is None or last_recognized_student != recognized_name:
             # New student recognized, display their details and mark attendance
@@ -64,11 +70,11 @@ def video_frame_callback(frame):
                 st.write(f"IC Number: {ic_number}")
             else:
                 st.error("Student details not found in the database.")
-
         else:
             # Same student recognized again, show 'already marked' message
             st.warning(f"{recognized_name} has already been marked for attendance.")
     
+    # Return the video frame with the predicted result (or original frame in case of error)
     return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
 # Start WebRTC video stream with callback
