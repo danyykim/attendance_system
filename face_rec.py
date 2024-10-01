@@ -130,8 +130,6 @@ class RealTimePred:
         test_copy = test_image.copy()
         # step-2: use for loop and extract each embedding and pass to ml_search_algorithm
 
-        message = ""
-
         for res in results:
             x1, y1, x2, y2 = res['bbox'].astype(int)
             embeddings = res['embedding']
@@ -142,25 +140,21 @@ class RealTimePred:
                                                         thresh=thresh)
             if person_name == 'Unknown':
                 color =(0,0,255) # bgr
-                message = "Unknown face detected"
             else:
                 color = (0,255,0)
-                 # Check if the person has already been marked in logs
-                if person_name in self.logs['name']:
-                    message = f"{person_name} is already marked."
-                else:
-                    message = f"{person_name} marked successfully!"
-                    self.logs['name'].append(person_name)
-                    self.logs['role'].append(person_role)
 
-        # Draw rectangle around face
-            cv2.rectangle(test_copy, (x1, y1), (x2, y2), color)
+            cv2.rectangle(test_copy,(x1,y1),(x2,y2),color)
 
-            # Add name and current time on the image
-            cv2.putText(test_copy, person_name, (x1, y1), cv2.FONT_HERSHEY_DUPLEX, 0.7, color, 2)
-            cv2.putText(test_copy, current_time, (x1, y2 + 10), cv2.FONT_HERSHEY_DUPLEX, 0.7, color, 2)
+            text_gen = person_name
+            cv2.putText(test_copy,text_gen,(x1,y1),cv2.FONT_HERSHEY_DUPLEX,0.7,color,2)
+            cv2.putText(test_copy,current_time,(x1,y2+10),cv2.FONT_HERSHEY_DUPLEX,0.7,color,2)
+            # save info in logs dict
+            self.logs['name'].append(person_name)
+            self.logs['role'].append(person_role)
+            self.logs['current_time'].append(current_time)
+            
 
-        return test_copy, message
+        return test_copy
 
 
 #### Registration Form
