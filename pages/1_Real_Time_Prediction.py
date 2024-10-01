@@ -37,7 +37,7 @@ def video_frame_callback(frame):
     
     # Update session state with the notification message
     st.session_state.notification = notification_message
-
+    print("Notification Message:", st.session_state.notification) 
     # Handle saving logs
     timenow = time.time()
     difftime = timenow - setTime
