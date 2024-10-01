@@ -25,6 +25,7 @@ realtimepred = face_rec.RealTimePred()  # Real-time prediction class
 
 # Store the last recognized student to avoid redundant logging
 last_recognized_student = None
+notification_area = st.empty()  # Empty container for notifications
 
 # Real-time prediction and attendance marking
 def video_frame_callback(frame):
@@ -51,6 +52,31 @@ def video_frame_callback(frame):
         setTime = time.time()  # Reset time
         print('Logs saved to Redis database')
 
+    # Update the notification area based on recognition
+    if recognized_name and recognized_name != "Unknown":
+        if last_recognized_student is None or last_recognized_student != recognized_name:
+            # New student recognized, display their details and mark attendance
+            last_recognized_student = recognized_name
+            marked_students = set()
+            marked_students.add(recognized_name)
+
+            # Get additional student details from Redis
+            student_data = redis_face_db[redis_face_db['Name'] == recognized_name]
+            if not student_data.empty:
+                role = student_data.iloc[0]['Role']
+                ic_number = student_data.iloc[0]['IC']
+                notification_area.success(f"Attendance marked for {recognized_name}!")
+                notification_area.write(f"Student Name: {recognized_name}")
+                notification_area.write(f"Role: {role}")
+                notification_area.write(f"IC Number: {ic_number}")
+            else:
+                notification_area.error("Student details not found in the database.")
+        else:
+            # Same student recognized again, show 'already marked' message
+            notification_area.warning(f"{recognized_name} has already been marked for attendance.")
+    else:
+        notification_area.info("No face recognized. Waiting for scan...")
+
     # Return the video frame with the predicted result (or original frame in case of error)
     return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
@@ -63,7 +89,7 @@ webrtc_ctx = webrtc_streamer(
     }
 )
 
-# Notification section (placed **below** the camera feed)
+# Notification section (below the camera feed)
 if webrtc_ctx.state.playing:
     st.markdown("---")
     st.subheader("Attendance Notification")
