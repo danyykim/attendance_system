@@ -31,8 +31,13 @@ with tab1:
 with tab2:
     if st.button('Refresh Logs'):
         logs_df = load_logs(name=name)
-        logs_df.index += 1
-        st.write(logs_df)
+        
+        if isinstance(logs_df, pd.DataFrame):
+            logs_df.index = logs_df.index + 1  # Shift index to start from 1
+            st.write(logs_df)
+        else:
+            st.write("No logs available or the data could not be retrieved.")
+        
 
 with tab3:
     st.subheader('Attendance Report')
