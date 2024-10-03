@@ -48,6 +48,9 @@ def retrive_data(name):
     
     retrive_df = retrive_df.sort_values(by='IC', ascending=False)
     
+    retrive_df.reset_index(drop=True, inplace=True)
+    retrive_df.index += 1 
+    
     return retrive_df[['Name','Role','IC','facial_features']]
 
 
