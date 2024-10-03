@@ -69,41 +69,4 @@ with tab3:
     report_df['Out_time'] = pd.to_datetime(report_df['Out_time'])
 
     report_df['Duration'] = report_df['Out_time'] - report_df['In_time']
-    
-    #step 4: marking person is present or absent
-    all_dates = report_df['Date'].unique()
-    name_role = report_df[['Name','Role']].drop_duplicates().values.tolist()
-    
-    date_name_rol_zip = []
-    for dt in all_dates:
-        for name, role in name_role:
-            date_name_rol_zip.append([dt, name, role])
-            
-    date_name_rol_zip_df = pd.DataFrame(date_name_rol_zip, columns=['Date','Name','Role'])
-    # left join with report_df
-    
-    date_name_rol_zip_df = pd.merge(date_name_rol_zip_df, report_df, how='left',on=['Date','Name','Role'])
-        
-    #duration
-    #hours
-    
-    date_name_rol_zip_df['Duration_seconds'] = date_name_rol_zip_df['Duration'].dt.seconds
-    date_name_rol_zip_df['Duration_hours'] = date_name_rol_zip_df['Duration_seconds']/(60*60)
-   
-    def status_marker(x): 
-        
-        if pd.Series(x).isnull().all():
-            return 'Absent'
-         
-        elif x > 0 and x < 1:
-            return 'Absent (less than 1 hr)'
-        
-        elif x >= 1 and x < 4:
-            return 'Half day'
-        
-        elif x >= 6:
-            return 'Present'
-        
-    date_name_rol_zip_df['Status'] = date_name_rol_zip_df['Duration_hours'].apply(status_marker)
-    
-    st.dataframe(date_name_rol_zip_df)
+    st.dataframe(report_df)
