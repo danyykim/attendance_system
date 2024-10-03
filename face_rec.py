@@ -46,7 +46,6 @@ def retrive_data(name):
         
     retrive_df[['Name','Role','IC']] = retrive_df['name_role'].apply(safe_split).apply(pd.Series)
     
-    retrive_df.index = retrive_df.index + 1
     retrive_df = retrive_df.sort_values(by='IC', ascending=False)
     
     return retrive_df[['Name','Role','IC','facial_features']]
