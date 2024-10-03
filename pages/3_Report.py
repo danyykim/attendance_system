@@ -30,12 +30,9 @@ with tab1:
 
 with tab2:
     if st.button('Refresh Logs'):
-        logs_list = load_logs(name=name)
-        
-        # Convert logs_list to DataFrame
-        logs_df = pd.DataFrame(logs_list, columns=["Log"])
-        logs_df.index += 1  # Shift index to start from 1
-        st.dataframe(logs_df)
+        logs_df = load_logs(name=name)
+        logs_df.index += 1
+        st.write(logs_df)
 
 with tab3:
     st.subheader('Attendance Report')
