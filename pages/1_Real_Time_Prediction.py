@@ -50,11 +50,11 @@ def video_frame_callback(frame):
                 if attendee not in recognized_attendees:
                     # Show success message immediately after face is recognized
                     attendance_placeholder.success(f"Attendance recorded for: {attendee}")
-                    st.write(f"Attendance recorded for: {attendee}")  # DEBUG
+                    print(f"Attendance recorded for: {attendee}")  # DEBUG
                     recognized_attendees.add(attendee)  # Add to recognized set
 
             # Save logs to Redis in a separate step (after showing the success message)
-            realtimepred.saveLogs_redis()
+            recorded_attendees = realtimepred.saveLogs_redis()
             setTime = time.time()  # Reset time after logs are saved
 
     return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
@@ -62,5 +62,5 @@ def video_frame_callback(frame):
 # Start the camera stream
 webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callback,
                 rtc_configuration={
-                    "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
-                })
+                    "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}
+                ]})
