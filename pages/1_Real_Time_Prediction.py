@@ -42,6 +42,7 @@ def video_frame_callback(frame):
             if attendee not in recognized_attendees:
                 # Display success message for new attendee
                 st.success(f"Attendance recorded for: {attendee}")
+                print(f"Attendance recorded for: {attendee}")
                 recognized_attendees.add(attendee)  # Add to the recognized set
         setTime = time.time()  # Reset time        
         print('Save Data to Redis database')
