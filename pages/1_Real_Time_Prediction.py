@@ -4,10 +4,12 @@ from streamlit_webrtc import webrtc_streamer
 import av
 import time
 
+# Authentication check
 if not st.session_state.get("authentication_status", False):
     st.warning("You must log in first.")
     st.stop()
 
+# Subheader
 st.subheader('Real-Time Attendance System')
 
 # Placeholder for showing success messages
@@ -19,7 +21,7 @@ with st.spinner('Retrieving Data from Redis DB ...'):
 
 st.success("Data successfully retrieved from Redis")
 
-# Time
+# Time settings
 waitTime = 30  # Time in seconds
 setTime = time.time()
 realtimepred = face_rec.RealTimePred()  # Real-time prediction class
@@ -34,23 +36,30 @@ def video_frame_callback(frame):
     pred_img = realtimepred.face_prediction(img, redis_face_db,
                                             'facial_features', ['Name', 'Role'], thresh=0.5)
 
+    # Time calculation for saving logs
     timenow = time.time()
     difftime = timenow - setTime
 
     if difftime >= waitTime:
-        # Save logs to Redis and get logged attendees
-        attendees = realtimepred.saveLogs_redis()
+        # Get attendees from the face recognition system
+        attendees = realtimepred.logs.get('name', [])
+
         if attendees:
             for attendee in attendees:
                 # Check if the attendee has been recognized before
                 if attendee not in recognized_attendees:
-                    # Display success message for new attendee
+                    # Show success message immediately after face is recognized
                     attendance_placeholder.success(f"Attendance recorded for: {attendee}")
-                    recognized_attendees.add(attendee)  # Add to the recognized set
-        setTime = time.time()  # Reset time
+                    st.write(f"Attendance recorded for: {attendee}")  # DEBUG
+                    recognized_attendees.add(attendee)  # Add to recognized set
+
+            # Save logs to Redis in a separate step (after showing the success message)
+            realtimepred.saveLogs_redis()
+            setTime = time.time()  # Reset time after logs are saved
 
     return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
+# Start the camera stream
 webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callback,
                 rtc_configuration={
                     "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
