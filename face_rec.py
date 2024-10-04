@@ -95,33 +95,34 @@ class RealTimePred:
         self.logs = dict(name=[],role=[],current_time=[])
         
     def saveLogs_redis(self):
-    # Step 1: Create a logs dataframe
+    # Step-1: create a logs dataframe
         dataframe = pd.DataFrame(self.logs)
-    
-    # Step 2: Drop duplicate information (distinct name)
+        
+        # Step-2: drop the duplicate information (distinct name)
         dataframe.drop_duplicates('name', inplace=True)
-    
-    # Step 3: Push data to Redis database (list)
+        
+        # Step-3: prepare the data to push to Redis
         name_list = dataframe['name'].tolist()
         role_list = dataframe['role'].tolist()
         ctime_list = dataframe['current_time'].tolist()
         
         encoded_data = []
-        logged_attendees = []  # To keep track of logged attendees
-        
+        attendees = []
         for name, role, ctime in zip(name_list, role_list, ctime_list):
             if name != 'Unknown':
                 concat_string = f"{name}@{role}@{ctime}"
                 encoded_data.append(concat_string)
-                logged_attendees.append(name)  # Track the name of the attendee
-                
+                attendees.append(name)  # Track the attendees
+
+        # Step-4: push data to Redis database
         if len(encoded_data) > 0:
             r.lpush('attendance:logs', *encoded_data)
-            
-        self.reset_dict()  
-        return logged_attendees  # Return the list of logged attendees
-
         
+        self.reset_dict()  # Reset logs dictionary
+        
+        # Return the list of attendees
+        return attendees
+
     def face_prediction(self,test_image, dataframe,feature_column,
                             name_role=['Name','Role'],thresh=0.5):
         # step-1: find the time
