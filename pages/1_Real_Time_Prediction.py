@@ -17,7 +17,7 @@ with st.spinner('Retrieving Data from Redis DB ...'):
 st.success("Data successfully retrieved from Redis")
 
 # Time
-waitTime = 30  # time in sec
+waitTime = 30  # Time in seconds
 setTime = time.time()
 realtimepred = face_rec.RealTimePred()  # Real-time prediction class
 
@@ -25,7 +25,6 @@ realtimepred = face_rec.RealTimePred()  # Real-time prediction class
 recognized_attendees = set()
 
 # Real-Time Prediction
-# Streamlit WebRTC
 def video_frame_callback(frame):
     global setTime
     img = frame.to_ndarray(format="bgr24")  # 3D NumPy array
@@ -36,7 +35,7 @@ def video_frame_callback(frame):
     difftime = timenow - setTime
 
     if difftime >= waitTime:
-        # Save logs to Redis
+        # Save logs to Redis and get logged attendees
         attendees = realtimepred.saveLogs_redis()
         for attendee in attendees:
             # Check if the attendee has been recognized before
@@ -51,5 +50,5 @@ def video_frame_callback(frame):
 
 webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callback,
                 rtc_configuration={
-        "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
-    })
+        "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}
+    ]})
