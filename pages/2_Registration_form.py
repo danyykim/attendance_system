@@ -19,44 +19,49 @@ role = st.selectbox(label='Select your Role', options=('Student', 'Teacher'))
 ic_number = st.text_input(label='IC Number', placeholder='Enter your 12-digit IC Number')
 
 # Validate IC number
-if len(str(ic_number)) != 12:
+if ic_number and len(str(ic_number)) != 12:
     st.error("IC Number must be exactly 12 digits.")
 
-# Step-2: Collect facial embedding of that person
-embedding = None  # Initialize embedding variable outside the function
+# Variable to store facial embedding
+embedding = None
 
+# Step-2: Collect facial embedding of that person
 def video_callback_func(frame):
     global embedding
     img = frame.to_ndarray(format='bgr24')  # 3D array BGR
-    reg_img, embedding = registration_form.get_embedding(img)
+    reg_img, embedding = registration_form.get_embedding(img)  # Capture the embedding
     
-    # Save data to local computer if embedding is available
-    if embedding is not None:
-        with open('face_embedding.txt', mode='ab') as f:
-            np.savetxt(f, embedding)
-
     return av.VideoFrame.from_ndarray(reg_img, format='bgr24')
 
-# Use webrtc_streamer to scan the face
+# Initialize the camera stream
 webrtc_streamer(key='registration', video_frame_callback=video_callback_func, rtc_configuration={
     "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
 })
 
-# Step-3: Save the data in Redis database upon form submission
+# Step-3: Save the data in Redis database
 if st.button('Submit'):
-    # Ensure all required fields are filled, including face embedding
     if person_name and role and ic_number and len(ic_number) == 12 and ic_number.isdigit():
+        # Ensure an embedding has been captured
         if embedding is not None:
-            # Try saving data in Redis
-            return_val = registration_form.save_data_in_redis_db(person_name, role, ic_number)
+            # Save the embedding to a file
+            with open('face_embedding.txt', mode='ab') as f:
+                np.savetxt(f, embedding)
             
+            # Save data in Redis database
+            return_val = registration_form.save_data_in_redis_db(person_name, role, ic_number)
             if return_val:
-                st.success(f"{person_name} registered successfully")
+                st.success(f"{person_name} registered successfully.")
+                
+                # Optionally reset input fields
+                person_name = ''
+                role = 'Student'
+                ic_number = ''
+                embedding = None  # Reset embedding for the next registration
             elif return_val == 'name_false':
-                st.error('Please enter a valid name: Name cannot be empty or just spaces.')
+                st.error('Please enter the name: Name cannot be empty or spaces')
             elif return_val == 'file_false':
-                st.error('face_embedding.txt not found. Please refresh the page and try again.')
+                st.error('face_embedding.txt is not found. Please refresh the page and execute again.')
         else:
-            st.error("Face scan is required. Please ensure the face is scanned properly before submitting.")
+            st.error("No facial embedding captured. Please ensure the camera is active.")
     else:
         st.error("Please fill all required fields correctly.")
