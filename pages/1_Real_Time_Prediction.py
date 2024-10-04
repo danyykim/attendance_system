@@ -18,7 +18,7 @@ with st.spinner('Retrieving Data from Redis DB ...'):
 st.success("Data successfully retrieved from Redis")
 
 # Define the time interval for saving logs
-waitTime = 30  # time in seconds
+waitTime = 30  # You can shorten this for testing purposes
 setTime = time.time()
 realtimepred = face_rec.RealTimePred()  # Real-time prediction class
 
@@ -32,12 +32,14 @@ if "attendance_message" not in st.session_state:
 # Define the callback function for video streaming
 def video_frame_callback(frame):
     global setTime
-    
-    img = frame.to_ndarray(format="bgr24")  # Convert frame to 3D NumPy array
 
+    img = frame.to_ndarray(format="bgr24")  # Convert frame to 3D NumPy array
     # Perform real-time face prediction
     pred_img = realtimepred.face_prediction(img, redis_face_db,
                                             'facial_features', ['Name', 'Role'], thresh=0.5)
+
+    # Show debug information about the face prediction process
+    st.write("Predicted Image Processed")
 
     timenow = time.time()
     difftime = timenow - setTime
@@ -45,7 +47,8 @@ def video_frame_callback(frame):
     # After a specific wait time, save logs to Redis and show success message
     if difftime >= waitTime:
         attendees = realtimepred.saveLogs_redis()  # Save logs and get attendee names
-        
+        st.write(f"Attendees: {attendees}")  # Show attendees if recognized
+
         # Check if attendees were successfully logged
         if attendees:
             for attendee in attendees:
