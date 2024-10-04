@@ -23,6 +23,7 @@ ic_number = st.text_input(label='IC Number', placeholder='Enter your 12-digit IC
 if len(str(ic_number)) != 12:
     st.error("IC Number must be exactly 12 digits.")
 
+embedding = None
 # Step-2: Collect facial embedding of that person
 def video_callback_func(frame):
     img = frame.to_ndarray(format='bgr24')  # 3D array BGR
@@ -41,7 +42,7 @@ webrtc_streamer(key='registration', video_frame_callback=video_callback_func, rt
 
 # Step-3: Save the data in Redis database
 if st.button('Submit'):
-    if person_name and role and ic_number and len(ic_number) == 12 and ic_number.isdigit():
+    if person_name and role and ic_number and len(ic_number) == 12 and ic_number.isdigit() and embedding is not None:
         return_val = registration_form.save_data_in_redis_db(person_name, role, ic_number)
         if return_val:
             st.success(f"{person_name} registered successfully")
@@ -51,4 +52,7 @@ if st.button('Submit'):
         elif return_val == 'file_false':
             st.error('face_embedding.txt is not found. Please refresh the page and execute again.')
     else:
-        st.error("Please fill all required fields correctly.")
+        if embedding is None:
+            st.error("Face scan is required")
+        else:
+            st.error("Please fill all required fields correctly.")
