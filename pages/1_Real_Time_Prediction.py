@@ -14,7 +14,6 @@ st.subheader('Real-Time Attendance System')
 # Retrive the data from Redis Database
 with st.spinner('Retriving Data from Redis DB ...'):    
     redis_face_db = face_rec.retrive_data(name='academy:register')
-    st.dataframe(redis_face_db)
     
 st.success("Data sucessfully retrived from Redis")
 
