@@ -107,19 +107,16 @@ class RealTimePred:
         role_list = dataframe['role'].tolist()
         ctime_list = dataframe['current_time'].tolist()
         encoded_data = []
-        recorded_attendees = []  # Keep track of recorded attendees
 
         for name, role, ctime in zip(name_list, role_list, ctime_list):
             if name != 'Unknown':
                 concat_string = f"{name}@{role}@{ctime}"
                 encoded_data.append(concat_string)
-                recorded_attendees.append(name)  # Track attendees that are recorded
 
         if len(encoded_data) > 0:
             r.lpush('attendance:logs', *encoded_data)
 
         self.reset_dict()  
-        return recorded_attendees  # Return the list of recorded attendees
 
 
     def face_prediction(self,test_image, dataframe,feature_column,
