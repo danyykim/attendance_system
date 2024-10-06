@@ -34,7 +34,8 @@ def video_frame_callback(frame):
     difftime = timenow - setTime
     if difftime >= waitTime:
         realtimepred.saveLogs_redis()
-        setTime = time.time() # reset time        
+        setTime = time.time() # reset time    
+        st.success("Success: Face successfully scanned and logged!")    
         print('Save Data to redis database')
     
 
