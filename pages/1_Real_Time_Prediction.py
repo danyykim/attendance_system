@@ -49,7 +49,7 @@ webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callb
 
 st.subheader("Prediction Results")
 
-if realtimepred.logs_saved:
+if realtimepred.saveLogs_redis:
     st.success("Success: Face successfully scanned and logged!")
 else:
     st.warning("No new logs to save.")
