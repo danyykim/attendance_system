@@ -13,14 +13,17 @@ with st.spinner('Retrieving Data from Redis DB...'):
 st.success("Data successfully retrieved from Redis")
 
 # Variables to track success state
-waitTime = 30  # time in sec
+waitTime = 10 # time in sec
 setTime = time.time()
 realtimepred = face_rec.RealTimePred()
-logs_saved = False  # New flag to track log saving
+
+# Add session state for logs_saved flag
+if 'logs_saved' not in st.session_state:
+    st.session_state['logs_saved'] = False
 
 # Real Time Prediction
 def video_frame_callback(frame):
-    global setTime, logs_saved
+    global setTime
 
     img = frame.to_ndarray(format="bgr24")  # 3 dimension numpy array
     pred_img = realtimepred.face_prediction(img, redis_face_db,
@@ -31,7 +34,7 @@ def video_frame_callback(frame):
 
     if difftime >= waitTime:
         realtimepred.saveLogs_redis()  # Save logs
-        logs_saved = True  # Set flag to True after saving logs
+        st.session_state['logs_saved'] = True  # Set flag to True after saving logs
         setTime = time.time()  # Reset time
 
     return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
@@ -42,7 +45,6 @@ webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callb
 
 # Display success message outside of callback
 st.subheader("Prediction Results")
-if logs_saved:
+if st.session_state['logs_saved']:
     st.success("Success: Face successfully scanned and logged!")
-else:
-    st.warning("No new logs to save.")
+    st.session_state['logs_saved'] = False  # Reset the flag for the next event
