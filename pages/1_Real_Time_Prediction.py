@@ -47,6 +47,7 @@ webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callb
         "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
     })
 
+st.success("Logs have been successfully saved.")
 st.subheader("Prediction Results")
 
 st.success("Logs have been successfully saved.")

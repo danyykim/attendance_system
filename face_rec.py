@@ -117,7 +117,7 @@ class RealTimePred:
             r.lpush('attendance:logs', *encoded_data)
 
         self.reset_dict()  
-        print(f"Logs successfully saved to Redis: {encoded_data}")
+
 
     def face_prediction(self,test_image, dataframe,feature_column,
                             name_role=['Name','Role'],thresh=0.5):
