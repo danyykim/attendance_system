@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import streamlit as st
 import cv2
 import redis
 
@@ -90,7 +91,6 @@ def ml_search_algorithm(dataframe,feature_column,test_vector,
 class RealTimePred:
     def __init__(self):
         self.logs = dict(name=[],role=[],current_time=[])
-        self.logs_saved = False
         
     def reset_dict(self):
         self.logs = dict(name=[],role=[],current_time=[])
@@ -116,10 +116,8 @@ class RealTimePred:
 
         if len(encoded_data) > 0:
             r.lpush('attendance:logs', *encoded_data)
-            self.logs_saved = True
+            st.session_state['success_message'] = "Success: Face successfully scanned!"  # Store success message in session state
             self.reset_dict() 
-        else:
-            self.logs_saved = False 
 
     def face_prediction(self,test_image, dataframe,feature_column,
                             name_role=['Name','Role'],thresh=0.5):
