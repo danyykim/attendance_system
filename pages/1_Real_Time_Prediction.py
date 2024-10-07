@@ -51,8 +51,9 @@ webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callb
 
 
 if st.session_state.logs_saved:
-    st.success("Success: Logs have been saved.")
-    st.session_state.logs_saved = False 
+    with st.expander("Success!", expanded=True):
+        st.write("Logs have been saved successfully.")
+    st.session_state.logs_saved = False  # Reset the flag
     
 st.subheader("Prediction Results")
 
