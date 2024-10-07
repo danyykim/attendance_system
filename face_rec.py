@@ -90,6 +90,7 @@ def ml_search_algorithm(dataframe,feature_column,test_vector,
 class RealTimePred:
     def __init__(self):
         self.logs = dict(name=[],role=[],current_time=[])
+        self.logs_saved = False
         
     def reset_dict(self):
         self.logs = dict(name=[],role=[],current_time=[])
@@ -115,7 +116,10 @@ class RealTimePred:
 
         if len(encoded_data) > 0:
             r.lpush('attendance:logs', *encoded_data)
-            self.reset_dict()  
+            self.logs_saved = True
+            self.reset_dict() 
+        else:
+            self.logs_saved = False 
 
     def face_prediction(self,test_image, dataframe,feature_column,
                             name_role=['Name','Role'],thresh=0.5):
