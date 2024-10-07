@@ -12,7 +12,7 @@ st.subheader('Reporting')
 name = 'attendance:logs'
 
 def load_logs(name, end=-1):
-    logs_list = face_rec.r.lrange(name, start=0, end=end)
+    logs_list = face_rec.r.lrange(name, start=1, end=end)
     return logs_list
 
 tab1, tab2, tab3 = st.tabs(['Registered Data', 'Logs', 'Attendance Report'])
