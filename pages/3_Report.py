@@ -30,7 +30,24 @@ with tab1:
 
 with tab2:
     if st.button('Refresh Logs'):        
-       st.write(load_logs(name=name))
+        logs_before = load_logs(name=name)
+        st.write(logs_before)
+
+        # Check if new logs have been added
+        if logs_before:
+            new_data_added = True  # Assume new data has been added if we get any logs
+            # Print/log the new data or any relevant info if needed
+        else:
+            new_data_added = False
+
+        # Store success message conditionally
+        if new_data_added:
+            st.session_state['success'] = True  # Set success flag
+
+# Show success message if new data was added
+if st.session_state.get('success', False):
+    st.success("Success: New data has been entered into attendance logs.")
+    st.session_state['success'] = False  # Reset flag
 
 with tab3:
     st.subheader('Attendance Report')
