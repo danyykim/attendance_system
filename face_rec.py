@@ -116,8 +116,6 @@ class RealTimePred:
         if len(encoded_data) > 0:
             r.lpush('attendance:logs', *encoded_data)
             self.reset_dict()  
-            return True
-        return False
 
     def face_prediction(self,test_image, dataframe,feature_column,
                             name_role=['Name','Role'],thresh=0.5):
