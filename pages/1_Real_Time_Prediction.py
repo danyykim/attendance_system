@@ -14,6 +14,8 @@ with st.spinner('Retriving Data from Redis DB ...'):
     
 st.success("Data sucessfully retrived from Redis")
 
+if 'logs_saved' not in st.session_state:
+    st.session_state.logs_saved = False
 # time 
 waitTime = 10 # time in sec
 setTime = time.time()
