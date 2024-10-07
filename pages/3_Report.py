@@ -12,7 +12,7 @@ st.subheader('Reporting')
 name = 'attendance:logs'
 
 def load_logs(name, end=-1):
-    logs_list = face_rec.r.lrange(name, start=1, end=end)
+    logs_list = face_rec.r.lrange(name, start=0, end=end)
     return logs_list
 
 tab1, tab2, tab3 = st.tabs(['Registered Data', 'Logs', 'Attendance Report'])
@@ -30,7 +30,15 @@ with tab1:
 
 with tab2:
     if st.button('Refresh Logs'):        
-       st.write(load_logs(name=name))
+        logs_before = load_logs(name=name)
+        st.write(logs_before)
+
+        # Check if there are new logs
+        new_logs = face_rec.r.lrange(name, start=len(logs_before), end=-1)
+        if new_logs:
+            st.session_state.new_logs_added = True  # Set session state for success message
+        else:
+            st.session_state.new_logs_added = False  # No new logs
 
 with tab3:
     st.subheader('Attendance Report')

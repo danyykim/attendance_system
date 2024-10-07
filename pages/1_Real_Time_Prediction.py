@@ -48,6 +48,8 @@ webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callb
 
 st.subheader("Prediction Results")
 
-
+if st.session_state.get('new_logs_added', False):
+    st.success("Success: New logs have been added!")
+    st.session_state.new_logs_added = False  # Reset the flag
     
     
