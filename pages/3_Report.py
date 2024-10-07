@@ -30,16 +30,7 @@ with tab1:
 
 with tab2:
     if st.button('Refresh Logs'):        
-        logs_before = load_logs(name=name)
-        st.write(logs_before)
-
-        # Check if there are new logs
-        new_logs = face_rec.r.lrange(name, start=len(logs_before), end=-1)
-        if new_logs:
-            st.session_state.new_logs_added = True  
-            st.success("New logs have been added!")# Set session state for success message
-        else:
-            st.session_state.new_logs_added = False  # No new logs
+       st.write(load_logs(name=name))
 
 with tab3:
     st.subheader('Attendance Report')

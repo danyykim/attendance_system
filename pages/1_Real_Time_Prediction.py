@@ -33,10 +33,10 @@ def video_frame_callback(frame):
     timenow = time.time()
     difftime = timenow - setTime
     if difftime >= waitTime:
-        realtimepred.saveLogs_redis()
+        if realtimepred.saveLogs_redis():
+            st.success("Success: Data has been saved to the Redis database.")
         setTime = time.time() # reset time    
         
-        print('Save Data to redis database')
     
     return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
@@ -48,8 +48,6 @@ webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callb
 
 st.subheader("Prediction Results")
 
-if st.session_state.get('new_logs_added', False):
-    st.success("Success: New logs have been added!")
-    st.session_state.new_logs_added = False  # Reset the flag
+
     
     
