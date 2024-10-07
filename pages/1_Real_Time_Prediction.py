@@ -36,6 +36,10 @@ def video_frame_callback(frame):
         realtimepred.saveLogs_redis()
         setTime = time.time() # reset time    
         
+        if realtimepred.saveLogs_redis:
+            st.success("Success: Face successfully scanned and logged!")
+        else:
+            st.warning("No new logs to save.")
         print('Save Data to redis database')
     
 
@@ -48,8 +52,3 @@ webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callb
     })
 
 st.subheader("Prediction Results")
-
-if realtimepred.saveLogs_redis:
-    st.success("Success: Face successfully scanned and logged!")
-else:
-    st.warning("No new logs to save.")
