@@ -4,50 +4,48 @@ from streamlit_webrtc import webrtc_streamer
 import av
 import time
 
-# st.set_page_config(page_title='Predictions')
 st.subheader('Real-Time Attendance System')
 
-
-# Retrive the data from Redis Database
-with st.spinner('Retriving Data from Redis DB ...'):    
+# Retrieve the data from Redis Database
+with st.spinner('Retrieving Data from Redis DB ...'):    
     redis_face_db = face_rec.retrive_data(name='academy:register')
-    
-st.success("Data sucessfully retrived from Redis")
 
-# time 
-waitTime = 10 # time in sec
+st.success("Data successfully retrieved from Redis")
+
+# Time settings
+waitTime = 10  # time in sec
 setTime = time.time()
-realtimepred = face_rec.RealTimePred() # real time prediction class
+realtimepred = face_rec.RealTimePred()  # real-time prediction class
 
-# Real Time Prediction
-# streamlit webrtc
-# callback function
+# Streamlit webrtc
+# Callback function
 def video_frame_callback(frame):
     global setTime
     
-    img = frame.to_ndarray(format="bgr24") # 3 dimension numpy array
-    # operation that you can perform on the array
-    pred_img = realtimepred.face_prediction(img,redis_face_db,
-                                        'facial_features',['Name','Role'],thresh=0.5)
+    img = frame.to_ndarray(format="bgr24")  # 3D numpy array
+    pred_img = realtimepred.face_prediction(img, redis_face_db, 'facial_features', ['Name', 'Role'], thresh=0.5)
     
     timenow = time.time()
     difftime = timenow - setTime
     if difftime >= waitTime:
-        if realtimepred.saveLogs_redis():
-            st.success("Success: Face successfully scanned and logged!") 
-        else:
-            st.warning("No new logs to save")
-        setTime = time.time() # reset time    
-        
-        print('Save Data to redis database')
-    
-    return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
+        setTime = time.time()  # Reset time
 
+        if realtimepred.logs['name']:  # Check if there are logs to save
+            realtimepred.saveLogs_redis()  # Save logs
+            return "Success"  # Return success indicator
+        return None  # No new logs
+
+    return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
 webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callback,
                 rtc_configuration={
-        "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
-    })
+                    "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
+                })
 
 st.subheader("Prediction Results")
- 
+
+# Display success message based on video frame callback
+if video_frame_callback is not None:
+    st.success("Success: Face successfully scanned and logged!")  # Show success message
+else:
+    st.warning("No new logs to save.")  # Warning message if no new logs
