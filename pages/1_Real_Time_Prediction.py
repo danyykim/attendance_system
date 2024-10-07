@@ -19,6 +19,7 @@ waitTime = 10 # time in sec
 setTime = time.time()
 realtimepred = face_rec.RealTimePred() # real time prediction class
 
+success_message_displayed = False
 # Real Time Prediction
 # streamlit webrtc
 # callback function
@@ -36,10 +37,12 @@ def video_frame_callback(frame):
         realtimepred.saveLogs_redis()
         setTime = time.time() # reset time    
         
-        if realtimepred.logs['name']:
-            st.success("Success: Face successfully scanned and logged!")    
-            print('Save Data to redis database')
+        if realtimepred.logs['name'] and not success_message_displayed:  
+            success_message_displayed = True  # Mark that success message has been displayed
+            return "Success: Face successfully scanned and logged!"  # Return message for display
+        print('Save Data to redis database')
     
+
     return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
 
@@ -50,3 +53,5 @@ webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callb
 
 st.subheader("Prediction Results")
 
+if success_message_displayed:
+    st.success("Success: Face successfully scanned and logged!")
