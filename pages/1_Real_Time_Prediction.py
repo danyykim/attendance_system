@@ -33,10 +33,10 @@ def video_frame_callback(frame):
     timenow = time.time()
     difftime = timenow - setTime
     if difftime >= waitTime:
-        if realtimepred.saveLogs_redis():
-            st.success("Success: Data has been saved to the Redis database.")
+        realtimepred.saveLogs_redis()
         setTime = time.time() # reset time    
         
+        print('Save Data to redis database')
     
     return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
