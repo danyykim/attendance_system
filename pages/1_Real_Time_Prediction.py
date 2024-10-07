@@ -48,3 +48,5 @@ webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callb
     })
 
 st.subheader("Prediction Results")
+
+st.success("Logs have been successfully saved.")
