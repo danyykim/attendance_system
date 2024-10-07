@@ -15,7 +15,7 @@ with st.spinner('Retriving Data from Redis DB ...'):
 st.success("Data sucessfully retrived from Redis")
 
 # time 
-waitTime = 30 # time in sec
+waitTime = 10 # time in sec
 setTime = time.time()
 realtimepred = face_rec.RealTimePred() # real time prediction class
 
@@ -35,6 +35,7 @@ def video_frame_callback(frame):
     if difftime >= waitTime:
         realtimepred.saveLogs_redis()
         setTime = time.time() # reset time    
+        
         st.success("Success: Face successfully scanned and logged!")    
         print('Save Data to redis database')
     
@@ -47,7 +48,6 @@ webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callb
         "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
     })
 
-st.success("Logs have been successfully saved.")
 st.subheader("Prediction Results")
 
 st.success("Logs have been successfully saved.")
