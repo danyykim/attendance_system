@@ -36,10 +36,10 @@ def video_frame_callback(frame):
         realtimepred.saveLogs_redis()
         setTime = time.time() # reset time    
         
-        st.success("Success: Face successfully scanned and logged!")    
-        print('Save Data to redis database')
+        if realtimepred.logs['name']:
+            st.success("Success: Face successfully scanned and logged!")    
+            print('Save Data to redis database')
     
-
     return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
 
@@ -50,4 +50,3 @@ webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callb
 
 st.subheader("Prediction Results")
 
-st.success("Logs have been successfully saved.")
