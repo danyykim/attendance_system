@@ -38,7 +38,6 @@ def video_frame_callback(frame):
         
         print('Save Data to redis database')
     
-
     return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
 
@@ -48,3 +47,9 @@ webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callb
     })
 
 st.subheader("Prediction Results")
+
+if 'success_message' in st.session_state:
+    st.success(st.session_state['success_message'])
+    del st.session_state['success_message']
+    
+    

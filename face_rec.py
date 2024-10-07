@@ -152,7 +152,6 @@ class RealTimePred:
             self.logs['role'].append(person_role)
             self.logs['current_time'].append(current_time)
             
-
         return test_copy
 
 
