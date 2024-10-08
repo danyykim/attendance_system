@@ -35,9 +35,14 @@ with col1:
 
         # Check if 10 seconds have passed
         if difftime >= waitTime:
-            realtimepred.saveLogs_redis()
+            new_logs_count = realtimepred.saveLogs_redis()
             setTime = time.time()  # Reset time
-            st.session_state.success = True  # Update success message flag
+            
+            if new_logs_count > 0:
+                st.session_state.new_data = True
+            else:
+                st.session_state.new_data = False
+                
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
     # Streamlit WebRTC streamer
@@ -48,7 +53,7 @@ with col1:
 # Column 2: Success Message
 with col2:
     st.subheader('Status')
-    if st.session_state.get('success', False):  # Use False as a default
+    if st.session_state.get('new_data'):  # Use False as a default
         st.success("Data has been successfully saved!")
     else:
         st.info("Waiting for recognition...")
