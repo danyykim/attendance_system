@@ -29,7 +29,6 @@ with tab1:
                 st.error("Data inconsistency: Column lengths do not match!")
 
 with tab2:
-    if st.button('Refresh Logs'): 
        logs = load_logs(name=name)       
        st.write(logs)
        
