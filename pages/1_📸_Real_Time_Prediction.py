@@ -41,7 +41,8 @@ with col1:
         if difftime >= waitTime:
             realtimepred.saveLogs_redis()
             setTime = time.time()  # Reset time
-            st.session_state.show_success = True  # Set flag for success
+            if realtimepred.saveLogs_redis(): 
+                st.session_state.show_success = True  # Set flag for success
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
     # Streamlit WebRTC streamer
