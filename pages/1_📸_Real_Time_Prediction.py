@@ -53,11 +53,14 @@ with col1:
 with col2:
     st.subheader('Status')
     
-    current_count = realtimepred.get_current_log_count()  # Get current log count
+    if st.session_state.get("camera_running", False):  # Check if the camera is running
+        current_count = realtimepred.get_current_log_count()  # Get current log count
 
-    # Check if the current count has increased
-    if current_count > previous_log_count:
-        st.success("Data has been successfully saved!")
-        previous_log_count = current_count  # Update previous log count
+        # Check if the current count has increased
+        if current_count > previous_log_count:
+            st.success("Data has been successfully saved!")
+            previous_log_count = current_count  # Update previous log count
+        else:
+            st.info("Waiting for recognition...")
     else:
-        st.info("Waiting for recognition...")
+        st.info("Camera is not yet started.")
