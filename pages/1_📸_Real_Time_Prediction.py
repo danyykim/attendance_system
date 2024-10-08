@@ -16,15 +16,28 @@ with col1:
         redis_face_db = face_rec.retrive_data(name='academy:register')
     st.success("Data successfully retrieved from Redis")
 
-    # Initialize prediction class
+    # Set wait time and initialize prediction class
+    waitTime = 10
+    setTime = time.time()
     realtimepred = face_rec.RealTimePred()
 
     # Real-time video frame callback
     def video_frame_callback(frame):
+        global setTime
+
         img = frame.to_ndarray(format="bgr24")  # Process video frame
         pred_img = realtimepred.face_prediction(
             img, redis_face_db, 'facial_features', ['Name', 'Role'], thresh=0.5
         )
+
+        timenow = time.time()
+        difftime = timenow - setTime
+
+        # Check if 10 seconds have passed
+        if difftime >= waitTime:
+            realtimepred.saveLogs_redis()
+            setTime = time.time()  # Reset time
+            st.session_state.success = True  # Update success message flag
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
     # Streamlit WebRTC streamer
@@ -32,17 +45,10 @@ with col1:
         "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
     })
 
-# Check logs and set success message
-if realtimepred.logs['name']:  # Check if there are any logs
-    realtimepred.saveLogs_redis()  # Save to Redis
-    st.session_state.success = True  # Update success flag
-else:
-    st.session_state.success = False  # Reset success flag
-
 # Column 2: Success Message
 with col2:
     st.subheader('Status')
-    if st.session_state.get('success'):
+    if st.session_state.get('success', False):  # Use False as a default
         st.success("Data has been successfully saved!")
     else:
         st.info("Waiting for recognition...")
