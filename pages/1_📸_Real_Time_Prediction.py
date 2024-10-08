@@ -21,9 +21,6 @@ with col1:
     setTime = time.time()
     realtimepred = face_rec.RealTimePred()
 
-    # Get initial count of attendance logs
-    initial_count = realtimepred.get_current_log_count()  # Assuming this method exists
-
     # Real-time video frame callback
     def video_frame_callback(frame):
         global setTime
@@ -38,15 +35,9 @@ with col1:
 
         # Check if 10 seconds have passed
         if difftime >= waitTime:
-            new_logs_count = realtimepred.saveLogs_redis()  # Save logs and get count
+            realtimepred.saveLogs_redis()
             setTime = time.time()  # Reset time
-            
-            # Check for new data
-            current_count = realtimepred.get_current_log_count()  # Get updated count
-            if current_count > initial_count:
-                st.session_state.success_message = "Data has been successfully saved!"
-            else:
-                st.session_state.success_message = "Unknown person."
+            print('Save Data to redis database')
 
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
@@ -55,10 +46,11 @@ with col1:
         "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
     })
 
-# Column 2: Status Message
+# Column 2: Success Message
 with col2:
     st.subheader('Status')
-    if 'success_message' in st.session_state:
-        st.success(st.session_state.success_message)
+    current_count = realtimepred.get_current_log_count()  # Get current log count
+    if current_count > 0:  # Check if there's any log
+        st.success("Data has been successfully saved!")
     else:
         st.info("Waiting for recognition...")
