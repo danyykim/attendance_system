@@ -7,62 +7,60 @@ import time
 # Subheader for the Real-Time Attendance System
 st.subheader('Real-Time Attendance System')
 
-# CSS to hide the button
-hide_button_css = """
-    <style>
-    #autoButton {
-        display: none;
-    }
-    </style>
-"""
-st.markdown(hide_button_css, unsafe_allow_html=True)
-
-# JavaScript to auto-click the button after 10 seconds
-auto_click_js = """
-    <script>
-    function simulateClick() {
-        document.getElementById("autoButton").click();
-    }
-    setTimeout(simulateClick, 10000);  // 10 seconds
-    </script>
-"""
-st.markdown(auto_click_js, unsafe_allow_html=True)
-
-# Hidden button to save logs (will be clicked automatically)
-if st.button("Save Logs", key="autoButton"):
-    st.success("Logs saved automatically after 10 seconds!")
-
 # Retrieving Data from Redis Database
 with st.spinner('Retrieving Data from Redis DB...'):
     redis_face_db = face_rec.retrive_data(name='academy:register')
-
 st.success("Data successfully retrieved from Redis")
 
-# Time-related setup
-waitTime = 10  # time in sec
+# Initialize time variables
+waitTime = 10  # Interval in seconds to save logs and show success
 setTime = time.time()
-realtimepred = face_rec.RealTimePred()  # real-time prediction class
+realtimepred = face_rec.RealTimePred()  # Real-time prediction class
+
+# Variables to track success and errors
+last_success_time = None
 
 # Video callback function for real-time prediction
 def video_frame_callback(frame):
-    global setTime
-
+    global setTime, last_success_time
+    
     img = frame.to_ndarray(format="bgr24")  # 3D numpy array
-    pred_img = realtimepred.face_prediction(img, redis_face_db, 'facial_features', ['Name', 'Role'], thresh=0.5)
-
+    pred_img, person_detected = realtimepred.face_prediction(img, redis_face_db, 'facial_features', ['Name', 'Role'], thresh=0.5)
+    
+    # Track time for sending logs
     timenow = time.time()
     difftime = timenow - setTime
+    
+    # Every 10 seconds, save logs to Redis
     if difftime >= waitTime:
         realtimepred.saveLogs_redis()
-        setTime = time.time()  # reset time
+        setTime = time.time()  # Reset timer
+        
+        # Show success message every 10 seconds
+        last_success_time = time.time()
+        st.success("Data successfully saved to logs!")
         print('Save Data to Redis database')
 
+    # If an unknown person is detected, show error message
+    if person_detected == 'unknown':
+        st.error("Unknown person detected!")
+    
     return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
+
 
 # Streamlit WebRTC streamer for real-time video
 webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callback,
                 rtc_configuration={
                     "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
                 })
+
+# Automatically trigger every 10 seconds to simulate button click
+def auto_trigger_logs():
+    timenow = time.time()
+    if last_success_time is not None and (timenow - last_success_time) >= waitTime:
+        st.rerun()  # Rerun to trigger the logic
+
+# Call the function to check every 10 seconds
+auto_trigger_logs()
 
 st.subheader("Prediction Results")
