@@ -7,6 +7,10 @@ import time
 # Set up the layout with two columns
 col1, col2 = st.columns(2)
 
+# Initialize session state variable for success message
+if 'success' not in st.session_state:
+    st.session_state.success = False
+
 # Column 1: Real-Time Attendance System
 with col1:
     st.subheader('Real-Time Attendance System')
@@ -26,7 +30,7 @@ with col1:
         global setTime
 
         img = frame.to_ndarray(format="bgr24")  # Process video frame
-        pred_img, detected_name = realtimepred.face_prediction(
+        pred_img = realtimepred.face_prediction(
             img, redis_face_db, 'facial_features', ['Name', 'Role'], thresh=0.5
         )
 
@@ -35,24 +39,24 @@ with col1:
 
         # Check if 10 seconds have passed
         if difftime >= waitTime:
+            realtimepred.saveLogs_redis()
             setTime = time.time()  # Reset time
-            if detected_name == "Unknown":
-                st.error("Unknown person detected!")
-            else:
-                realtimepred.saveLogs_redis()
-                st.session_state['success'] = True  # Trigger success in column 2
-
+            st.session_state.success = True  # Set success flag
+            print('Save Data to redis database')
+        else:
+            st.session_state.success = False  # Reset success flag if not time yet
+            
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
     # Streamlit WebRTC streamer
     webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callback, rtc_configuration={
-        "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
-    })
+        "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}
+    ]})
 
 # Column 2: Success Message
 with col2:
     st.subheader('Status')
-    if st.session_state.get('success'):
+    if st.session_state.success:
         st.success("Data has been successfully saved!")
     else:
         st.info("Waiting for recognition...")

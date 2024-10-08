@@ -11,7 +11,7 @@ names = ["Danieal"]
 usernames = ["nyel"]
 
 # Load hashed passwords
-file_path = Path("/var/www/html/attendance_system/hashed_pw.pkl")
+file_path = Path("hashed_pw.pkl")
 with file_path.open("rb") as file:
     hashed_passwords = pickle.load(file)
 
