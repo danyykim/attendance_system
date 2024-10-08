@@ -8,26 +8,28 @@ import time
 st.subheader('Real-Time Attendance System')
 
 # CSS to hide the button
-st.markdown("""
+hide_button_css = """
     <style>
-    .hidden-button {
+    #autoButton {
         display: none;
     }
     </style>
-""", unsafe_allow_html=True)
+"""
+st.markdown(hide_button_css, unsafe_allow_html=True)
 
-# JavaScript to simulate a button click after 10 seconds
-st.markdown("""
+# JavaScript to auto-click the button after 10 seconds
+auto_click_js = """
     <script>
     function simulateClick() {
         document.getElementById("autoButton").click();
     }
     setTimeout(simulateClick, 10000);  // 10 seconds
     </script>
-""", unsafe_allow_html=True)
+"""
+st.markdown(auto_click_js, unsafe_allow_html=True)
 
-# Hidden button to save logs
-if st.button("Save Logs", key="autoButton", help="This button is hidden and will be clicked automatically.", css_class="hidden-button"):
+# Hidden button to save logs (will be clicked automatically)
+if st.button("Save Logs", key="autoButton"):
     st.success("Logs saved automatically after 10 seconds!")
 
 # Retrieving Data from Redis Database
