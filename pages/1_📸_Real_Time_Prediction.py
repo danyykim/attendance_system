@@ -45,6 +45,7 @@ with col1:
             setTime = time.time()  # Reset time
             
             current_log_count = len(face_rec.r.lrange('attendance:logs', 0, -1))
+            print(f"Current log count: {current_log_count}, Previous log count: {st.session_state.previous_log_count}")
             # Check if new logs are added
             if current_log_count > st.session_state.previous_log_count:
                 st.session_state.success_message = "New logs added!"  # Update success message
