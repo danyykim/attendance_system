@@ -7,13 +7,6 @@ import time
 # Set up the layout with two columns
 col1, col2 = st.columns(2)
 
-# Function to display the success message
-def display_success_message():
-    if st.session_state.get('success'):
-        st.success("Data has been successfully saved!")
-    else:
-        st.info("Waiting for recognition...")
-
 # Column 1: Real-Time Attendance System
 with col1:
     st.subheader('Real-Time Attendance System')
@@ -32,23 +25,24 @@ with col1:
         pred_img = realtimepred.face_prediction(
             img, redis_face_db, 'facial_features', ['Name', 'Role'], thresh=0.5
         )
-
-        # Check if data should be logged and trigger success message
-        if realtimepred.logs['name']:  # Check if there are any logs
-            realtimepred.saveLogs_redis()  # Save to Redis
-            st.session_state.success = True  # Set success message flag
-        else:
-            st.session_state.success = False  # Reset success message flag
-
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
     # Streamlit WebRTC streamer
     webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callback, rtc_configuration={
-        "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}
-    ]})
+        "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
+    })
+
+# Check logs and set success message
+if realtimepred.logs['name']:  # Check if there are any logs
+    realtimepred.saveLogs_redis()  # Save to Redis
+    st.session_state.success = True  # Update success flag
+else:
+    st.session_state.success = False  # Reset success flag
 
 # Column 2: Success Message
 with col2:
     st.subheader('Status')
-    display_success_message()  # Call the function to display the success message
-    video_frame_callback()
+    if st.session_state.get('success'):
+        st.success("Data has been successfully saved!")
+    else:
+        st.info("Waiting for recognition...")
