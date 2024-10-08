@@ -17,12 +17,12 @@ waitTime = 10  # Interval in seconds to save logs and show success
 setTime = time.time()
 realtimepred = face_rec.RealTimePred()  # Real-time prediction class
 
-# Variables to track success and errors
-last_success_time = None
+# Track whether the success message should be displayed
+show_success = False
 
 # Video callback function for real-time prediction
 def video_frame_callback(frame):
-    global setTime, last_success_time
+    global setTime, show_success
     
     img = frame.to_ndarray(format="bgr24")  # 3D numpy array
     pred_img, person_detected = realtimepred.face_prediction(img, redis_face_db, 'facial_features', ['Name', 'Role'], thresh=0.5)
@@ -31,14 +31,11 @@ def video_frame_callback(frame):
     timenow = time.time()
     difftime = timenow - setTime
     
-    # Every 10 seconds, save logs to Redis
+    # Every 10 seconds, save logs to Redis and set flag to show success
     if difftime >= waitTime:
         realtimepred.saveLogs_redis()
         setTime = time.time()  # Reset timer
-        
-        # Show success message every 10 seconds
-        last_success_time = time.time()
-        st.success("Data successfully saved to logs!")
+        show_success = True  # Flag to trigger success message in main loop
         print('Save Data to Redis database')
 
     # If an unknown person is detected, show error message
@@ -54,13 +51,9 @@ webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callb
                     "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
                 })
 
-# Automatically trigger every 10 seconds to simulate button click
-def auto_trigger_logs():
-    timenow = time.time()
-    if last_success_time is not None and (timenow - last_success_time) >= waitTime:
-        st.rerun()  # Rerun to trigger the logic
-
-# Call the function to check every 10 seconds
-auto_trigger_logs()
+# Display success message if flagged
+if show_success:
+    st.success("Data successfully saved to logs!")
+    show_success = False  # Reset flag after showing success
 
 st.subheader("Prediction Results")
