@@ -29,24 +29,12 @@ with tab1:
                 st.error("Data inconsistency: Column lengths do not match!")
 
 with tab2:
-    if 'previous_total' not in st.session_state:
-        st.session_state.previous_total = 0  # Initialize the previous total log count
-
-    if st.button('Refresh Logs'):
-        logs_list = load_logs(name=name)
-        current_total = len(logs_list)  # Count the current logs
-
-        # Check if the current total is greater than the previous total
-        if current_total > st.session_state.previous_total:
-            st.success(f"New logs added! Current total logs: {current_total}")
-        else:
-            st.info(f"No new logs. Current total logs: {current_total}")
-
-        # Update the previous total with the current total
-        st.session_state.previous_total = current_total
-
-        st.write(f"Total logs: {current_total}")
-        st.write(logs_list)
+    if st.button('Refresh Logs'): 
+       logs = load_logs(name=name)       
+       st.write(logs)
+       
+       log_count = len(logs)
+       st.write(f"Total logs: {log_count}")
 
 with tab3:
     st.subheader('Attendance Report')

@@ -4,6 +4,12 @@ from streamlit_webrtc import webrtc_streamer
 import av
 import time
 
+# Initialize session state for log count and message if not already done
+if 'previous_log_count' not in st.session_state:
+    st.session_state.previous_log_count = 0
+if 'success_message' not in st.session_state:
+    st.session_state.success_message = "Waiting for recognition..."
+
 # Set up the layout with two columns
 col1, col2 = st.columns(2)
 
@@ -37,8 +43,16 @@ with col1:
         if difftime >= waitTime:
             realtimepred.saveLogs_redis()
             setTime = time.time()  # Reset time
-             # Trigger success in column 2
-            print('Save Data to redis database')
+            
+            current_log_count = len(face_rec.r.lrange('attendance:logs', 0, -1))
+            # Check if new logs are added
+            if current_log_count > st.session_state.previous_log_count:
+                st.session_state.success_message = "New logs added!"  # Update success message
+            else:
+                st.session_state.success_message = "No new logs."
+            
+            st.session_state.previous_log_count = current_log_count
+            print('Save Data to Redis database')
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
     # Streamlit WebRTC streamer
@@ -49,7 +63,4 @@ with col1:
 # Column 2: Success Message
 with col2:
     st.subheader('Status')
-    if st.session_state.get('success'):
-        st.success("Data has been successfully saved!")
-    else:
-        st.info("Waiting for recognition...")
+    st.info(st.session_state.success_message)
