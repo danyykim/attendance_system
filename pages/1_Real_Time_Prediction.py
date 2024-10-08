@@ -29,14 +29,17 @@ with col1:
         pred_img, detected_name = realtimepred.face_prediction(
             img, redis_face_db, 'facial_features', ['Name', 'Role'], thresh=0.5
         )
-        
+
         timenow = time.time()
-        if timenow - setTime >= waitTime:
+        difftime = timenow - setTime
+
+        # Check if 10 seconds have passed
+        if difftime >= waitTime:
+            setTime = time.time()  # Reset time
             if detected_name == "Unknown":
                 st.error("Unknown person detected!")
             else:
                 realtimepred.saveLogs_redis()
-                setTime = time.time()  # Reset time
                 st.session_state['success'] = True  # Trigger success in column 2
 
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
