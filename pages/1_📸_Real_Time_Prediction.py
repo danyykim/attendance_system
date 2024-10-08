@@ -23,6 +23,7 @@ with col1:
 
     # Initialize previous log count
     previous_log_count = 0
+    st.session_state.camera_running = True  # Set camera running state to True
 
     # Real-time video frame callback
     def video_frame_callback(frame):
