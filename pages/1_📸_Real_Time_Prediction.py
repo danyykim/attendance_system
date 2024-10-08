@@ -23,7 +23,6 @@ with col1:
 
     # Initialize previous log count
     previous_log_count = 0
-    st.session_state.camera_running = True  # Set camera running state to True
 
     # Real-time video frame callback
     def video_frame_callback(frame):
@@ -39,9 +38,13 @@ with col1:
 
         # Check if 10 seconds have passed
         if difftime >= waitTime:
-            realtimepred.saveLogs_redis()
+            current_count = realtimepred.get_current_log_count()  # Get current log count
+            
+            if current_count > previous_log_count:  # Only save if new logs are detected
+                realtimepred.saveLogs_redis()
+                previous_log_count = current_count  # Update previous log count
+                print('Save Data to Redis database')
             setTime = time.time()  # Reset time
-            print('Save Data to Redis database')
 
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
@@ -53,14 +56,13 @@ with col1:
 # Column 2: Success Message
 with col2:
     st.subheader('Status')
-    
+
     if st.session_state.get("camera_running", False):  # Check if the camera is running
         current_count = realtimepred.get_current_log_count()  # Get current log count
 
         # Check if the current count has increased
         if current_count > previous_log_count:
             st.success("Data has been successfully saved!")
-            previous_log_count = current_count  # Update previous log count
         else:
             st.info("Waiting for recognition...")
     else:
