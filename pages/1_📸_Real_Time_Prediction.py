@@ -21,9 +21,12 @@ with col1:
     setTime = time.time()
     realtimepred = face_rec.RealTimePred()
 
+    # Initialize previous log count
+    previous_log_count = 0
+
     # Real-time video frame callback
     def video_frame_callback(frame):
-        global setTime
+        global setTime, previous_log_count
 
         img = frame.to_ndarray(format="bgr24")  # Process video frame
         pred_img = realtimepred.face_prediction(
@@ -37,7 +40,7 @@ with col1:
         if difftime >= waitTime:
             realtimepred.saveLogs_redis()
             setTime = time.time()  # Reset time
-            print('Save Data to redis database')
+            print('Save Data to Redis database')
 
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
@@ -49,8 +52,12 @@ with col1:
 # Column 2: Success Message
 with col2:
     st.subheader('Status')
+    
     current_count = realtimepred.get_current_log_count()  # Get current log count
-    if current_count > 0:  # Check if there's any log
+
+    # Check if the current count has increased
+    if current_count > previous_log_count:
         st.success("Data has been successfully saved!")
+        previous_log_count = current_count  # Update previous log count
     else:
         st.info("Waiting for recognition...")
