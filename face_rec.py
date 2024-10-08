@@ -120,12 +120,10 @@ class RealTimePred:
             self.reset_dict() 
             return len(encoded_data)
         return 0 
-    
-    def check_new_data(self):
-        new_count = len(self.logs['name'])
-        new_data_added = new_count - self.previous_count
-        self.previous_count = new_count
-        return new_data_added > 0 
+
+    def get_current_log_count(self):
+        # Retrieve the current count of attendance logs from Redis
+        return r.llen('attendance:logs')
 
     def face_prediction(self,test_image, dataframe,feature_column,
                             name_role=['Name','Role'],thresh=0.5):
