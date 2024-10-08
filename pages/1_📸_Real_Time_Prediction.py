@@ -4,9 +4,8 @@ from streamlit_webrtc import webrtc_streamer
 import av
 import time
 
-# Initialize session state for tracking success message
-if 'show_success' not in st.session_state:
-    st.session_state.show_success = False
+# Initialize global variable
+success_message = False
 
 # Set up the layout with two columns
 col1, col2 = st.columns(2)
@@ -27,7 +26,7 @@ with col1:
 
     # Real-time video frame callback
     def video_frame_callback(frame):
-        global setTime
+        global setTime, success_message
 
         img = frame.to_ndarray(format="bgr24")  # Process video frame
         pred_img = realtimepred.face_prediction(
@@ -41,8 +40,11 @@ with col1:
         if difftime >= waitTime:
             realtimepred.saveLogs_redis()
             setTime = time.time()  # Reset time
-            if realtimepred.saveLogs_redis(): 
-                st.session_state.show_success = True  # Set flag for success
+
+            # Set success message flag
+            global success_message
+            success_message = True  # Update global variable
+
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
     # Streamlit WebRTC streamer
@@ -53,8 +55,7 @@ with col1:
 # Column 2: Success Message
 with col2:
     st.subheader('Status')
-    if st.session_state.show_success:
-        with st.popover("Data has been successfully saved!"):
-            st.write("This message indicates that the data has been saved.")
+    if success_message:  # Check global variable for success
+        st.write("Data has been successfully saved!")
     else:
         st.info("Waiting for recognition...")
