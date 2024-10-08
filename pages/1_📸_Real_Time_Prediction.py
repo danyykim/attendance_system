@@ -21,12 +21,9 @@ with col1:
     setTime = time.time()
     realtimepred = face_rec.RealTimePred()
 
-    # Initialize previous log count
-    previous_log_count = 0
-
     # Real-time video frame callback
     def video_frame_callback(frame):
-        global setTime, previous_log_count
+        global setTime
 
         img = frame.to_ndarray(format="bgr24")  # Process video frame
         pred_img = realtimepred.face_prediction(
@@ -38,14 +35,10 @@ with col1:
 
         # Check if 10 seconds have passed
         if difftime >= waitTime:
-            current_count = realtimepred.get_current_log_count()  # Get current log count
-            
-            if current_count > previous_log_count:  # Only save if new logs are detected
-                realtimepred.saveLogs_redis()
-                previous_log_count = current_count  # Update previous log count
-                print('Save Data to Redis database')
+            realtimepred.saveLogs_redis()
             setTime = time.time()  # Reset time
-
+             # Trigger success in column 2
+            print('Save Data to redis database')
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
     # Streamlit WebRTC streamer
@@ -56,14 +49,7 @@ with col1:
 # Column 2: Success Message
 with col2:
     st.subheader('Status')
-
-    if st.session_state.get("camera_running", False):  # Check if the camera is running
-        current_count = realtimepred.get_current_log_count()  # Get current log count
-
-        # Check if the current count has increased
-        if current_count > previous_log_count:
-            st.success("Data has been successfully saved!")
-        else:
-            st.info("Waiting for recognition...")
+    if st.session_state.get('success'):
+        st.success("Data has been successfully saved!")
     else:
-        st.info("Camera is not yet started.")
+        st.info("Waiting for recognition...")

@@ -29,8 +29,12 @@ with tab1:
                 st.error("Data inconsistency: Column lengths do not match!")
 
 with tab2:
-    if st.button('Refresh Logs'):        
-       st.write(load_logs(name=name))
+    if st.button('Refresh Logs'): 
+       logs = load_logs(name=name)       
+       st.write(logs)
+       
+       log_count = len(logs)
+       st.write(f"Total logs: {log_count}")
 
 with tab3:
     st.subheader('Attendance Report')

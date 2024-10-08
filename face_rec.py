@@ -91,7 +91,6 @@ def ml_search_algorithm(dataframe,feature_column,test_vector,
 class RealTimePred:
     def __init__(self):
         self.logs = dict(name=[],role=[],current_time=[])
-        self.previous_count = 0
         
     def reset_dict(self):
         self.logs = dict(name=[],role=[],current_time=[])
@@ -117,13 +116,8 @@ class RealTimePred:
 
         if len(encoded_data) > 0:
             r.lpush('attendance:logs', *encoded_data)
-            self.reset_dict() 
-            return len(encoded_data)
-        return 0 
 
-    def get_current_log_count(self):
-        # Retrieve the current count of attendance logs from Redis
-        return r.llen('attendance:logs')
+            self.reset_dict() 
 
     def face_prediction(self,test_image, dataframe,feature_column,
                             name_role=['Name','Role'],thresh=0.5):
