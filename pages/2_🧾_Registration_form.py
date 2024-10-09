@@ -63,6 +63,7 @@ if st.button('Submit'):
             st.success(f"{person_name} registered successfully")
             person_name = ""
             ic_number = ""
+            st.rerun()
             # Optionally reset input fields here
         elif return_val == 'file_false':
             st.error('face_embedding.txt is not found. Please refresh the page and execute again.')
