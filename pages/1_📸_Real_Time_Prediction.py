@@ -3,11 +3,12 @@ from Home import face_rec
 from streamlit_webrtc import webrtc_streamer
 import av
 import time
+import queue
 import threading
 
 # Threading lock for thread-safe access
 lock = threading.Lock()
-success_container = {"success": False, "name": ""}  # Shared container
+success_container = {"success": False}  # Shared container
 
 # Set up the layout with two columns
 col1, col2 = st.columns(2)
@@ -28,7 +29,7 @@ with col1:
     def video_frame_callback(frame):
         global setTime
         img = frame.to_ndarray(format="bgr24")
-        pred_img, recognized_name = realtimepred.face_prediction(
+        pred_img = realtimepred.face_prediction(
             img, redis_face_db, 'facial_features', ['Name', 'Role'], thresh=0.5
         )
         
@@ -42,12 +43,11 @@ with col1:
             # Thread-safe access
             with lock:
                 success_container["success"] = True
-                success_container["name"] = recognized_name  # Store recognized name
 
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
     ctx = webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callback, rtc_configuration={
-        "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
+        "iceServers": [{"urls": ["stun:stun.services.mozilla.com:3478"]}]
     })
 
 # Column 2: Status Update
@@ -58,9 +58,8 @@ with col2:
     while ctx.state.playing:
         with lock:
             if success_container["success"]:
-                name = success_container["name"]  # Get the name of the recognized person
-                success_placeholder.success(f"{name} has been successfully saved!")  # Display name
-                time.sleep(2)  # Keep message for 2 seconds
-                success_placeholder.empty()  # Clear the message
+                success_placeholder.success("Data has been successfully saved!")
+                time.sleep(2)
+                success_placeholder.empty()
                 success_container["success"] = False  # Reset after showing message
         time.sleep(1)
