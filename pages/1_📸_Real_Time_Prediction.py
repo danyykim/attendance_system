@@ -59,13 +59,7 @@ with col2:
     while ctx.state.playing:
         with lock:
             if success_container["success"]:
-                if not message_displayed:  # Check if info message is displayed
-                    st.info("Waiting for recognition...")  # Display info message once
-                    message_displayed = True  # Set flag after displaying info
-                st.success("Data has been successfully saved!")  # Show success message
-                success_container["success"] = False  # Reset after showing success
-                time.sleep(10)  # Show the message for 10 seconds
-            else:
-                if message_displayed:
-                    message_displayed = False  # Reset the flag for the next round
-                time.sleep(1)  #
+                st.success("Data has been successfully saved!")
+                success_container["success"] = False  # Reset after showing message
+                time.sleep(2)
+        time.sleep(1)
