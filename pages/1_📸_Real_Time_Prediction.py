@@ -61,4 +61,4 @@ with col2:
                 success_container["success"] = False  # Reset after showing message
             else:
                 st.info("Waiting for recognition...")
-        time.sleep(1)
+        time.sleep(10)
