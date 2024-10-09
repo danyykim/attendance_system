@@ -37,12 +37,13 @@ with col1:
         difftime = timenow - setTime
 
         if difftime >= waitTime:
-            realtimepred.saveLogs_redis()
+            logged_names = realtimepred.saveLogs_redis()
             setTime = time.time()  # Reset time
             
             # Thread-safe access
             with lock:
                 success_container["success"] = True
+                success_container["names"] = logged_names
 
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
@@ -58,7 +59,8 @@ with col2:
     while ctx.state.playing:
         with lock:
             if success_container["success"]:
-                success_placeholder.success("Data has been successfully saved!")
+                names = ', '.join(success_container.get("names", []))  # Join names into a string
+                success_placeholder.success(f"Data has been successfully saved! Names: {names}")
                 time.sleep(2)
                 success_placeholder.empty()
                 success_container["success"] = False  # Reset after showing message
