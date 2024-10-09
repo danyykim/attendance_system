@@ -183,50 +183,39 @@ class RegistrationForm:
             
         return frame, embeddings
     
-    def save_data_in_redis_db(self,name,role,ic_number):
-        # validation name
-        if name is not None:
-            if name.strip() != '':
-                key = f'{name}@{role}@{ic_number}'
-            else:
-                return 'name_false'
-        else:
+    def check_ic_exists(self, ic_number):
+        # Check if the IC number is already in the Redis database
+        keys = r.hkeys('academy:register')  # Retrieve all keys from the specified hash
+        for key in keys:
+            # Split the key to check the IC number
+            _, _, existing_ic = key.decode().split('@')  # Decode and split the key
+            if existing_ic == ic_number:  # Compare with the given IC number
+                return True
+        return False
+
+    def save_data_in_redis_db(self, name, role, ic_number):
+        if name is None or name.strip() == '':
             return 'name_false'
         
-        #validation
-        
-        # if face_embedding.txt exists
+        # Check if the IC number already exists
+        if self.check_ic_exists(ic_number):
+            return 'ic_exists'
+
         if 'face_embedding.txt' not in os.listdir():
             return 'file_false'
         
-        
-        # step-1: load "face_embedding.txt"
-        x_array = np.loadtxt('face_embedding.txt',dtype=np.float32) # flatten array            
-        
-        # step-2: convert into array (proper shape)
-        received_samples = int(x_array.size/512)
-        x_array = x_array.reshape(received_samples,512)
-        x_array = np.asarray(x_array)       
-        
-        # step-3: cal. mean embeddings
-        x_mean = x_array.mean(axis=0)
-        x_mean = x_mean.astype(np.float32)
+        # Load face embeddings and save to Redis
+        x_array = np.loadtxt('face_embedding.txt', dtype=np.float32)
+        received_samples = int(x_array.size / 512)
+        x_array = x_array.reshape(received_samples, 512).astype(np.float32)
+        x_mean = x_array.mean(axis=0).astype(np.float32)
         x_mean_bytes = x_mean.tobytes()
+
+        key = f'{name}@{role}@{ic_number}'
+        r.hset(name='academy:register', key=key, value=x_mean_bytes)
         
-        # step-4: save this into redis database
-        # redis hashes
-        r.hset(name='academy:register',key=key,value=x_mean_bytes)
-        
-        # 
         os.remove('face_embedding.txt')
         self.reset()
         
         return True
-
-    def check_ic_exists(self, ic_number):
-            # Check if the IC number is already in the Redis database
-            keys = self.redis_client.keys('*')  # Retrieve all keys
-            for key in keys:
-                if ic_number in key.decode():  # Convert bytes to string for comparison
-                    return True
-            return False
+    
