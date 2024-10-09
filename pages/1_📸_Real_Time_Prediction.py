@@ -46,7 +46,7 @@ with col1:
 
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
-    webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callback, rtc_configuration={
+    ctx = webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callback, rtc_configuration={
         "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
     })
 
@@ -54,7 +54,7 @@ with col1:
 with col2:
     st.subheader('Status')
     
-    while webrtc_streamer.state.playing:
+    while ctx.state.playing:
         with lock:
             if success_container["success"]:
                 st.success("Data has been successfully saved!")
