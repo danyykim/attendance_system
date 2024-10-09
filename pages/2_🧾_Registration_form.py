@@ -50,15 +50,17 @@ webrtc_streamer(key='registration', video_frame_callback=video_callback_func, rt
 
 # Step-3: Save the data in Redis database
 if st.button('Submit'):
-    if person_name and role and ic_number and len(ic_number) == 12 and ic_number.isdigit():
-        if not registration_form.check_ic_exists(ic_number):
-            return_val = registration_form.save_data_in_redis_db(person_name, role, ic_number)
-            if return_val:
-                st.success(f"{person_name} registered successfully")
-                # Reset input fields
-            elif return_val == 'name_false':
-                st.error('Please enter the name: Name cannot be empty or spaces')
-            elif return_val == 'file_false':
-                st.error('face_embedding.txt is not found. Please refresh the page and execute again.')
-        else:
-            st.error("Please fill all required fields correctly.")
+    if not person_name or person_name.strip() == '':
+        st.error('Please enter a valid name: Name cannot be empty or spaces.')
+    elif len(ic_number) != 12 or not ic_number.isdigit():
+        st.error("IC Number must be exactly 12 digits and numeric.")
+    elif registration_form.check_ic_exists(ic_number):
+        st.error("IC Number already registered.")
+    else:
+        # All validations passed, save data to Redis
+        return_val = registration_form.save_data_in_redis_db(person_name, role, ic_number)
+        if return_val:
+            st.success(f"{person_name} registered successfully")
+            # Optionally reset input fields here
+        elif return_val == 'file_false':
+            st.error('face_embedding.txt is not found. Please refresh the page and execute again.')
