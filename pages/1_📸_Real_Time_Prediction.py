@@ -53,13 +53,13 @@ with col1:
 # Column 2: Status Update
 with col2:
     st.subheader('Status')
-    
-    message_displayed = False
-    
+    success_placeholder = st.empty()
+
     while ctx.state.playing:
         with lock:
             if success_container["success"]:
-                st.success("Data has been successfully saved!")
-                success_container["success"] = False  # Reset after showing message
+                success_placeholder.success("Data has been successfully saved!")
                 time.sleep(2)
+                success_placeholder.empty()
+                success_container["success"] = False  # Reset after showing message
         time.sleep(1)
