@@ -61,9 +61,6 @@ if st.button('Submit'):
         return_val = registration_form.save_data_in_redis_db(person_name, role, ic_number)
         if return_val:
             st.success(f"{person_name} registered successfully")
-            person_name = ""
-            ic_number = ""
-            st.rerun()
             # Optionally reset input fields here
         elif return_val == 'file_false':
             st.error('face_embedding.txt is not found. Please refresh the page and execute again.')
