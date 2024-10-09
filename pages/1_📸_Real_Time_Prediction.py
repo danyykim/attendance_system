@@ -3,9 +3,7 @@ from Home import face_rec
 from streamlit_webrtc import webrtc_streamer
 import av
 import time
-
-# Initialize global variable
-success_message = False
+import queue  # Import queue for inter-thread communication
 
 # Set up the layout with two columns
 col1, col2 = st.columns(2)
@@ -24,9 +22,12 @@ with col1:
     setTime = time.time()
     realtimepred = face_rec.RealTimePred()
 
+    # Create a queue to communicate between threads
+    message_queue = queue.Queue()
+
     # Real-time video frame callback
     def video_frame_callback(frame):
-        global setTime, success_message
+        global setTime
 
         img = frame.to_ndarray(format="bgr24")  # Process video frame
         pred_img = realtimepred.face_prediction(
@@ -41,9 +42,8 @@ with col1:
             realtimepred.saveLogs_redis()
             setTime = time.time()  # Reset time
 
-            # Set success message flag
-            global success_message
-            success_message = True  # Update global variable
+            # Put success message in the queue
+            message_queue.put('Data saved to Redis')
 
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
@@ -55,7 +55,8 @@ with col1:
 # Column 2: Success Message
 with col2:
     st.subheader('Status')
-    if success_message:  # Check global variable for success
-        st.write("Data has been successfully saved!")
-    else:
-        st.info("Waiting for recognition...")
+
+    # Check the queue for new messages
+    while not message_queue.empty():
+        success_message = message_queue.get()
+        st.write(success_message)  # Display the success message
