@@ -62,7 +62,7 @@ with col2:
             if success_container["success"]:
                 names = ', '.join(success_container.get("names", []))  # Join names into a string
                 count = success_container["scanned_count"]
-                success_placeholder.success(f"Data has been successfully saved! Names: {names}")
+                success_placeholder.success(f"Data has been successfully saved! Names: {names} | Total scanned: {count}")
                 time.sleep(5)
                 success_placeholder.empty()
                 success_container["success"] = False  # Reset after showing message
