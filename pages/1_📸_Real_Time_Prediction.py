@@ -8,7 +8,7 @@ import threading
 
 # Threading lock for thread-safe access
 lock = threading.Lock()
-success_container = {"success": False}  # Shared container
+success_container = {"success": False, "names": [], "scanned_count": 0 }  # Shared container
 
 # Set up the layout with two columns
 col1, col2 = st.columns(2)
@@ -44,6 +44,7 @@ with col1:
             with lock:
                 success_container["success"] = True
                 success_container["names"] = logged_names
+                success_container["scanned_count"] += len(logged_names)  # Increment the scanned count
 
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
@@ -60,6 +61,7 @@ with col2:
         with lock:
             if success_container["success"]:
                 names = ', '.join(success_container.get("names", []))  # Join names into a string
+                count = success_container["scanned_count"]
                 success_placeholder.success(f"Data has been successfully saved! Names: {names}")
                 time.sleep(5)
                 success_placeholder.empty()
