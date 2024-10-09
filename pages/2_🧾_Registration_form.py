@@ -15,7 +15,7 @@ st.subheader('Registration Form')
 registration_form = face_rec.RegistrationForm()
 
 # Step-1: Collect person name and role
-person_name = st.text_input(label='Name', placeholder='First & Last Name')
+person_name = st.text_input(label='Name', placeholder='First & Last Name').upper()
 role = st.selectbox(label='Select your Role', options=('Student', 'Teacher'))
 ic_number = st.text_input(label='IC Number', placeholder='Enter your 12-digit IC Number')
 
