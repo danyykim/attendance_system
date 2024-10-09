@@ -194,7 +194,7 @@ class RegistrationForm:
         return False
 
     def save_data_in_redis_db(self, name, role, ic_number):
-        if name is None or name.strip() == '':
+        if not name or name.strip() == '':
             return 'name_false'
         
         # Check if the IC number already exists
