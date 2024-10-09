@@ -223,10 +223,10 @@ class RegistrationForm:
         
         return True
 
-def check_ic_exists(self, ic_number):
-        # Check if the IC number is already in the Redis database
-        keys = self.redis_client.keys('*')  # Retrieve all keys
-        for key in keys:
-            if ic_number in key.decode():  # Convert bytes to string for comparison
-                return True
-        return False
+    def check_ic_exists(self, ic_number):
+            # Check if the IC number is already in the Redis database
+            keys = self.redis_client.keys('*')  # Retrieve all keys
+            for key in keys:
+                if ic_number in key.decode():  # Convert bytes to string for comparison
+                    return True
+            return False
