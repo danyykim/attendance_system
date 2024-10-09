@@ -1,16 +1,17 @@
-import threading
 import streamlit as st
 from Home import face_rec
 from streamlit_webrtc import webrtc_streamer
 import av
 import time
+import queue
+import threading
+
+# Threading lock for thread-safe access
+lock = threading.Lock()
+success_container = {"success": False}  # Shared container
 
 # Set up the layout with two columns
 col1, col2 = st.columns(2)
-
-# Initialize session state for success message
-if 'success' not in st.session_state:
-    st.session_state.success = False
 
 # Column 1: Real-Time Attendance System
 with col1:
@@ -21,47 +22,48 @@ with col1:
         redis_face_db = face_rec.retrive_data(name='academy:register')
     st.success("Data successfully retrieved from Redis")
 
-    # Set wait time and initialize prediction class
     waitTime = 10
     setTime = time.time()
     realtimepred = face_rec.RealTimePred()
 
-    # Lock for thread safety
-    lock = threading.Lock()
-    success_container = {"success": False}
-
-    # Real-time video frame callback
     def video_frame_callback(frame):
         global setTime
-
-        img = frame.to_ndarray(format="bgr24")  # Process video frame
+        img = frame.to_ndarray(format="bgr24")
         pred_img = realtimepred.face_prediction(
             img, redis_face_db, 'facial_features', ['Name', 'Role'], thresh=0.5
         )
-
+        
         timenow = time.time()
         difftime = timenow - setTime
 
-        # Check if 10 seconds have passed
         if difftime >= waitTime:
             realtimepred.saveLogs_redis()
             setTime = time.time()  # Reset time
             
+            # Thread-safe access
             with lock:
-                success_container["success"] = True  # Update success status
-            st.session_state.success = True  # Update session state
+                success_container["success"] = True
 
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
-    # Streamlit WebRTC streamer
-    webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callback, rtc_configuration={
-        "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}
-    ]})
+    ctx = webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callback, rtc_configuration={
+        "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
+    })
 
-# Column 2: Success Message
+# Column 2: Status Update
 with col2:
     st.subheader('Status')
-    if success_container["success"] or st.session_state.success:
-        st.success("Data has been successfully saved!")
-    else:
-        st.info("Waiting for recognition...")
+    
+    message_displayed = False
+    
+    while ctx.state.playing:
+        with lock:
+            if success_container["success"] and not message_displayed:
+                st.success("Data has been successfully saved!")
+                success_container["success"] = False  # Reset after showing message
+                message_displayed = True  # Set the flag to true
+                time.sleep(10)  # Show the message for 10 seconds
+            else:
+                if not message_displayed:
+                    st.info("Waiting for recognition...")
+                time.sleep(1)  # Update every second
