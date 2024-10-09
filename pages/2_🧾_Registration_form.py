@@ -15,13 +15,22 @@ st.subheader('Registration Form')
 registration_form = face_rec.RegistrationForm()
 
 # Step-1: Collect person name and role
-person_name = (st.text_input(label='Name', placeholder='First & Last Name').upper())
+person_name = st.text_input(label='Name', placeholder='First & Last Name').upper()
 role = st.selectbox(label='Select your Role', options=('Student', 'Teacher'))
 ic_number = st.text_input(label='IC Number', placeholder='Enter your 12-digit IC Number')
 
 # Validate IC number
 if len(str(ic_number)) != 12:
     st.error("IC Number must be exactly 12 digits.")
+    
+if st.button('Check IC Number'):
+    if ic_number and ic_number.isdigit():
+        if registration_form.check_ic_exists(ic_number):
+            st.error("IC Number already registered.")
+        else:
+            st.success("IC Number is available for registration.")
+    else:
+        st.error("Please enter a valid IC Number.")
 
 # Step-2: Collect facial embedding of that person
 def video_callback_func(frame):
@@ -42,13 +51,14 @@ webrtc_streamer(key='registration', video_frame_callback=video_callback_func, rt
 # Step-3: Save the data in Redis database
 if st.button('Submit'):
     if person_name and role and ic_number and len(ic_number) == 12 and ic_number.isdigit():
-        return_val = registration_form.save_data_in_redis_db(person_name, role, ic_number)
-        if return_val:
-            st.success(f"{person_name} registered successfully")
-            # Reset input fields
-        elif return_val == 'name_false':
-            st.error('Please enter the name: Name cannot be empty or spaces')
-        elif return_val == 'file_false':
-            st.error('face_embedding.txt is not found. Please refresh the page and execute again.')
-    else:
-        st.error("Please fill all required fields correctly.")
+        if not registration_form.check_ic_exists(ic_number):
+            return_val = registration_form.save_data_in_redis_db(person_name, role, ic_number)
+            if return_val:
+                st.success(f"{person_name} registered successfully")
+                # Reset input fields
+            elif return_val == 'name_false':
+                st.error('Please enter the name: Name cannot be empty or spaces')
+            elif return_val == 'file_false':
+                st.error('face_embedding.txt is not found. Please refresh the page and execute again.')
+        else:
+            st.error("Please fill all required fields correctly.")
