@@ -61,7 +61,7 @@ with col2:
             if success_container["success"]:
                 names = ', '.join(success_container.get("names", []))  # Join names into a string
                 success_placeholder.success(f"Data has been successfully saved! Names: {names}")
-                time.sleep(2)
+                time.sleep(5)
                 success_placeholder.empty()
                 success_container["success"] = False  # Reset after showing message
         time.sleep(1)
