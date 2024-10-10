@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 import cv2
 import redis
-
+import pytz
 # insight face
 from insightface.app import FaceAnalysis
 from sklearn.metrics import pairwise
@@ -54,6 +54,10 @@ def retrive_data(name):
 faceapp = FaceAnalysis(name='buffalo_sc',root='insightface_model', providers = ['CPUExecutionProvider'])
 faceapp.prepare(ctx_id = 0, det_size=(640,640), det_thresh = 0.5)
 
+def get_current_time():
+    malaysia_tz = pytz.timezone('Asia/Kuala_Lumpur')
+    current_time = datetime.now(malaysia_tz).strftime("%Y-%m-%d %H:%M:%S")
+    return current_time
 # ML Search Algorithm
 def ml_search_algorithm(dataframe,feature_column,test_vector,
                         name_role=['Name','Role'],thresh=0.5):
@@ -126,7 +130,7 @@ class RealTimePred:
     def face_prediction(self,test_image, dataframe,feature_column,
                             name_role=['Name','Role'],thresh=0.5):
         # step-1: find the time
-        current_time = str(datetime.now())
+        current_time = get_current_time()
         
         # step-1: take the test image and apply to insight face
         results = faceapp.get(test_image)
