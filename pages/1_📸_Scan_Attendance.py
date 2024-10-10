@@ -27,10 +27,12 @@ if not st.session_state.check_in and not st.session_state.check_out:
         if st.button('Check In'):
             st.session_state.check_in = True
             st.session_state.show_camera = True
+            st.session_state.check_out = False
     with col2:
         if st.button('Check Out'):
             st.session_state.check_out = True
             st.session_state.show_camera = True
+            st.session_state.check_in = False
 
 if st.session_state.show_camera:
     
