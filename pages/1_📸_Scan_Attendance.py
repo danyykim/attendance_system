@@ -9,28 +9,28 @@ import threading
 lock = threading.Lock()
 success_container = {"success": False}  # Shared container
 
-# Set up the layout with two columns for buttons
+# Set up the layout with buttons
 st.subheader('Attendance System')
 
+# Check In and Check Out buttons
 col1, col2 = st.columns(2)
-
-# Check In button
 with col1:
-    if st.button('Check In'):
-        # Logic for starting the camera and check-in
-        st.session_state.check_in = True
+    check_in = st.button('Check In')
 
-# Check Out button
 with col2:
-    if st.button('Check Out'):
-        # Logic for starting the camera and check-out
-        st.session_state.check_out = True
+    check_out = st.button('Check Out')
 
-# Initialize the camera only if either button is clicked
-if 'check_in' in st.session_state or 'check_out' in st.session_state:
+if check_in or check_out:
+    # Set up the layout for the camera and status display
+    st.subheader('Real-Time Attendance System')
+
+    # Retrieve data from Redis
+    with st.spinner('Retrieving Data from Redis DB ...'):
+        redis_face_db = face_rec.retrive_data(name='academy:register')
+    st.success("Data successfully retrieved from Redis")
+
     waitTime = 10
     setTime = time.time()
-    redis_face_db = face_rec.retrive_data(name='academy:register')
     realtimepred = face_rec.RealTimePred()
 
     def video_frame_callback(frame):
@@ -58,16 +58,16 @@ if 'check_in' in st.session_state or 'check_out' in st.session_state:
         "iceServers": [{"urls": ["stun:stun.services.mozilla.com:3478"]}]
     })
 
-# Status Update Section
-st.subheader('Status')
-success_placeholder = st.empty()
+    # Status Update Section
+    st.subheader('Status')
+    success_placeholder = st.empty()
 
-while 'check_in' in st.session_state or 'check_out' in st.session_state:
-    with lock:
-        if success_container["success"]:
-            names = ', '.join(success_container.get("names", []))  # Join names into a string
-            success_placeholder.success(f"Data has been successfully saved! Names: {names}")
-            time.sleep(5)
-            success_placeholder.empty()
-            success_container["success"] = False  # Reset after showing message
-    time.sleep(1)
+    while ctx.state.playing:
+        with lock:
+            if success_container["success"]:
+                names = ', '.join(success_container.get("names", []))  # Join names into a string
+                success_placeholder.success(f"Data has been successfully saved! Names: {names}")
+                time.sleep(5)
+                success_placeholder.empty()
+                success_container["success"] = False  # Reset after showing message
+        time.sleep(1)
