@@ -58,6 +58,7 @@ if ctx.state.playing:
     with lock:
             if embedding_success:
                 st.success("Facial embedding captured successfully!")
+                
 # Step-3: Save the data in Redis database
 if st.button('Submit'):
     if not person_name or person_name.strip() == '':
@@ -66,11 +67,11 @@ if st.button('Submit'):
         st.error("IC Number must be exactly 12 digits and numeric.")
     elif registration_form.check_ic_exists(ic_number):
         st.error("IC Number already registered.")
+    elif return_val == 'file_false':
+        st.error('face_embedding.txt is not found. Please refresh the page and execute again.')
     else:
         # All validations passed, save data to Redis
         return_val = registration_form.save_data_in_redis_db(person_name, role, ic_number)
         if return_val:
             st.success(f"{person_name} registered successfully")
             # Optionally reset input fields here
-        elif return_val == 'file_false':
-            st.error('face_embedding.txt is not found. Please refresh the page and execute again.')
