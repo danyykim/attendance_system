@@ -42,7 +42,7 @@ if st.session_state.show_camera:
     if st.button('Back'):
         st.session_state.show_camera = False
         st.session_state.check_in = False
-        st.session_state.check_out = False
+        st.session_state.check_out = True
 
     # Retrieve data from Redis
     with st.spinner('Retrieving Data from Redis DB ...'):
