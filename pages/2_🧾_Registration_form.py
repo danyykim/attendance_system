@@ -44,9 +44,9 @@ def video_callback_func(frame):
     with lock:
     # Save data to local computer
         if embedding is not None:
-            embedding_success["success"] = True
             with open('face_embedding.txt', mode='ab') as f:
                 np.savetxt(f, embedding)
+                embedding_success["success"] = True
 
     return av.VideoFrame.from_ndarray(reg_img, format='bgr24')
 
