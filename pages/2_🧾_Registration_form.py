@@ -44,18 +44,20 @@ def video_callback_func(frame):
     with lock:
     # Save data to local computer
         if embedding is not None:
+            embedding_success["success"] = True
             with open('face_embedding.txt', mode='ab') as f:
                 np.savetxt(f, embedding)
-                embedding_success["success"] = True
 
     return av.VideoFrame.from_ndarray(reg_img, format='bgr24')
 
-webrtc_streamer(key='registration', video_frame_callback=video_callback_func, rtc_configuration={
+ctx = webrtc_streamer(key='registration', video_frame_callback=video_callback_func, rtc_configuration={
     "iceServers": [{"urls": ["stun:stun.services.mozilla.com:3478"]}]
 })
 
-if embedding_success:
-    st.success("Facial embedding captured successfully!")
+if ctx.state.playing:
+    with lock:
+            if embedding_success:
+                st.success("Facial embedding captured successfully!")
 # Step-3: Save the data in Redis database
 if st.button('Submit'):
     if not person_name or person_name.strip() == '':
