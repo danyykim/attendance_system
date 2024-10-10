@@ -9,48 +9,60 @@ import threading
 lock = threading.Lock()
 success_container = {"success": False}  # Shared container
 
-# Set up the layout with a single row
-st.subheader('Real-Time Attendance System')
+# Set up the layout with two columns for buttons
+st.subheader('Attendance System')
 
-# Retrieve data from Redis
-with st.spinner('Retrieving Data from Redis DB ...'):
+col1, col2 = st.columns(2)
+
+# Check In button
+with col1:
+    if st.button('Check In'):
+        # Logic for starting the camera and check-in
+        st.session_state.check_in = True
+
+# Check Out button
+with col2:
+    if st.button('Check Out'):
+        # Logic for starting the camera and check-out
+        st.session_state.check_out = True
+
+# Initialize the camera only if either button is clicked
+if 'check_in' in st.session_state or 'check_out' in st.session_state:
+    waitTime = 10
+    setTime = time.time()
     redis_face_db = face_rec.retrive_data(name='academy:register')
-st.success("Data successfully retrieved from Redis")
+    realtimepred = face_rec.RealTimePred()
 
-waitTime = 10
-setTime = time.time()
-realtimepred = face_rec.RealTimePred()
-
-def video_frame_callback(frame):
-    global setTime
-    img = frame.to_ndarray(format="bgr24")
-    pred_img = realtimepred.face_prediction(
-        img, redis_face_db, 'facial_features', ['Name', 'Role'], thresh=0.5
-    )
-    
-    timenow = time.time()
-    difftime = timenow - setTime
-
-    if difftime >= waitTime:
-        logged_names = realtimepred.saveLogs_redis()
-        setTime = time.time()  # Reset time
+    def video_frame_callback(frame):
+        global setTime
+        img = frame.to_ndarray(format="bgr24")
+        pred_img = realtimepred.face_prediction(
+            img, redis_face_db, 'facial_features', ['Name', 'Role'], thresh=0.5
+        )
         
-        # Thread-safe access
-        with lock:
-            success_container["success"] = True
-            success_container["names"] = logged_names
+        timenow = time.time()
+        difftime = timenow - setTime
 
-    return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
+        if difftime >= waitTime:
+            logged_names = realtimepred.saveLogs_redis()
+            setTime = time.time()  # Reset time
+            
+            # Thread-safe access
+            with lock:
+                success_container["success"] = True
+                success_container["names"] = logged_names
 
-ctx = webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callback, rtc_configuration={
-    "iceServers": [{"urls": ["stun:stun.services.mozilla.com:3478"]}]
-})
+        return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
+
+    ctx = webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callback, rtc_configuration={
+        "iceServers": [{"urls": ["stun:stun.services.mozilla.com:3478"]}]
+    })
 
 # Status Update Section
 st.subheader('Status')
 success_placeholder = st.empty()
 
-while ctx.state.playing:
+while 'check_in' in st.session_state or 'check_out' in st.session_state:
     with lock:
         if success_container["success"]:
             names = ', '.join(success_container.get("names", []))  # Join names into a string
