@@ -86,9 +86,13 @@ if st.session_state.show_camera:
     while ctx.state.playing:
         with lock:
             if success_container["success"]:
-                names, unknown_count = success_container.get("names", []), success_container.get("unknown_count", 0) # Join names into a string
-                names_str = ', '.join(names)
-                success_placeholder.success(f"Data has been successfully saved! Names: {names_str}. Unknown persons detected: {unknown_count}")
+                names = ', '.join(success_container.get("names", []))  # Join recognized names into a string
+                unknown_count = success_container.get("unknown_count", 0)  # Get unknown person count
+                success_message = f"Data has been successfully saved! Names: {names}"
+                if unknown_count > 0:
+                    success_message += f" | Unknown Persons Detected: {unknown_count}"
+
+                success_placeholder.success(success_message)
                 time.sleep(5)
                 success_placeholder.empty()
                 success_container["success"] = False  # Reset after showing message
