@@ -56,8 +56,8 @@ faceapp.prepare(ctx_id = 0, det_size=(640,640), det_thresh = 0.5)
 
 def get_current_time():
     malaysia_tz = pytz.timezone('Asia/Kuala_Lumpur')
-    current_time = datetime.now(malaysia_tz).isoformat()
-    return current_time.split('.')[0]
+    current_time = datetime.now(malaysia_tz).strftime("%Y-%m-%d %H:%M:%S")
+    return current_time
 # ML Search Algorithm
 def ml_search_algorithm(dataframe,feature_column,test_vector,
                         name_role=['Name','Role'],thresh=0.5):
