@@ -67,8 +67,8 @@ if st.button('Submit'):
         st.error("IC Number must be exactly 12 digits and numeric.")
     elif registration_form.check_ic_exists(ic_number):
         st.error("IC Number already registered.")
-    elif return_val == 'file_false':
-        st.error('face_embedding.txt is not found. Please refresh the page and execute again.')
+    elif not embedding_success["success"]:
+        st.error('Please capture your facial before submitting')
     else:
         # All validations passed, save data to Redis
         return_val = registration_form.save_data_in_redis_db(person_name, role, ic_number)
