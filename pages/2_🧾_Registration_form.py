@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 from streamlit_webrtc import webrtc_streamer
 import av
+import threading
 
 if not st.session_state.get("authentication_status", False):
     st.warning("You must log in first.")
@@ -32,6 +33,7 @@ if st.button('Check IC Number'):
     else:
         st.error("Please enter a valid IC Number.")
 
+embedding_saved = False
 # Step-2: Collect facial embedding of that person
 def video_callback_func(frame):
     img = frame.to_ndarray(format='bgr24')  # 3D array BGR
@@ -39,6 +41,7 @@ def video_callback_func(frame):
     
     # Save data to local computer
     if embedding is not None:
+        embedding_saved = True
         with open('face_embedding.txt', mode='ab') as f:
             np.savetxt(f, embedding)
 
@@ -48,6 +51,8 @@ webrtc_streamer(key='registration', video_frame_callback=video_callback_func, rt
     "iceServers": [{"urls": ["stun:stun.services.mozilla.com:3478"]}]
 })
 
+if embedding_saved:
+    st.success("Facial embedding captured successfully!")
 # Step-3: Save the data in Redis database
 if st.button('Submit'):
     if not person_name or person_name.strip() == '':
