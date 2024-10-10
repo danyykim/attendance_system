@@ -72,6 +72,7 @@ if st.session_state.show_camera:
             with lock:
                 success_container["success"] = True
                 success_container["names"] = logged_names
+                success_container["unknown_count"]  = unknown_count
 
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
