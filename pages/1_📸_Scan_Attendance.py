@@ -20,7 +20,15 @@ with col1:
 with col2:
     check_out = st.button('Check Out')
 
+# Initialize session state if not already done
+if 'show_camera' not in st.session_state:
+    st.session_state.show_camera = False
+
+# Set session state on button click
 if check_in or check_out:
+    st.session_state.show_camera = True
+
+if st.session_state.show_camera:
     # Set up the layout for the camera and status display
     st.subheader('Real-Time Attendance System')
 
