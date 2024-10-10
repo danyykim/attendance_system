@@ -113,19 +113,22 @@ class RealTimePred:
         ctime_list = dataframe['current_time'].tolist()
         encoded_data = []
         logged_names = []
+        unknown_count = 0
 
         for name, role, ctime in zip(name_list, role_list, ctime_list):
             if name != 'Unknown':
                 concat_string = f"{name}@{role}@{ctime}"
                 encoded_data.append(concat_string)
                 logged_names.append(name)
+            else:
+                unknown_count += 1
 
         if len(encoded_data) > 0:
             r.lpush('attendance:logs', *encoded_data)
 
             self.reset_dict() 
         
-        return logged_names
+        return logged_names, unknown_count
 
     def face_prediction(self,test_image, dataframe,feature_column,
                             name_role=['Name','Role'],thresh=0.5):
