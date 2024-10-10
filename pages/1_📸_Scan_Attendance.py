@@ -12,21 +12,25 @@ success_container = {"success": False}  # Shared container
 # Set up the layout with buttons
 st.subheader('Attendance System')
 
-# Check In and Check Out buttons
-col1, col2 = st.columns(2)
-with col1:
-    check_in = st.button('Check In')
-
-with col2:
-    check_out = st.button('Check Out')
-
 # Initialize session state if not already done
 if 'show_camera' not in st.session_state:
     st.session_state.show_camera = False
+if 'check_in' not in st.session_state:
+    st.session_state.check_in = False
+if 'check_out' not in st.session_state:
+    st.session_state.check_out = False
 
-# Set session state on button click
-if check_in or check_out:
-    st.session_state.show_camera = True
+# Check In and Check Out buttons
+if not st.session_state.check_in and not st.session_state.check_out:
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button('Check In'):
+            st.session_state.check_in = True
+            st.session_state.show_camera = True
+    with col2:
+        if st.button('Check Out'):
+            st.session_state.check_out = True
+            st.session_state.show_camera = True
 
 if st.session_state.show_camera:
     # Set up the layout for the camera and status display
