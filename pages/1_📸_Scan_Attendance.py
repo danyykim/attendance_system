@@ -37,7 +37,6 @@ if not st.session_state.check_in and not st.session_state.check_out:
 if st.session_state.show_camera:
     
     # Set up the layout for the camera and status display
-    st.subheader('Real-Time Attendance System')
     
     if st.button('Back'):
         st.session_state.show_camera = False
