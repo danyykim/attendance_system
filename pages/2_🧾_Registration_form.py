@@ -33,17 +33,20 @@ if st.button('Check IC Number'):
     else:
         st.error("Please enter a valid IC Number.")
 
-embedding_saved = False
+lock = threading.Lock()
+embedding_success = {"success": False}
 # Step-2: Collect facial embedding of that person
 def video_callback_func(frame):
+    global embedding_success
     img = frame.to_ndarray(format='bgr24')  # 3D array BGR
     reg_img, embedding = registration_form.get_embedding(img)
     
+    with lock:
     # Save data to local computer
-    if embedding is not None:
-        embedding_saved = True
-        with open('face_embedding.txt', mode='ab') as f:
-            np.savetxt(f, embedding)
+        if embedding is not None:
+            embedding_success["success"] = True
+            with open('face_embedding.txt', mode='ab') as f:
+                np.savetxt(f, embedding)
 
     return av.VideoFrame.from_ndarray(reg_img, format='bgr24')
 
@@ -51,7 +54,7 @@ webrtc_streamer(key='registration', video_frame_callback=video_callback_func, rt
     "iceServers": [{"urls": ["stun:stun.services.mozilla.com:3478"]}]
 })
 
-if embedding_saved:
+if embedding_success:
     st.success("Facial embedding captured successfully!")
 # Step-3: Save the data in Redis database
 if st.button('Submit'):
