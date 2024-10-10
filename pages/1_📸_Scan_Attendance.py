@@ -20,6 +20,10 @@ if 'check_in' not in st.session_state:
 if 'check_out' not in st.session_state:
     st.session_state.check_out = False
 
+if st.button('Back'):
+    st.session_state.show_camera = False
+    st.session_state.check_in = False
+    st.session_state.check_out = False
 # Check In and Check Out buttons
 if not st.session_state.check_in and not st.session_state.check_out:
     col1, col2 = st.columns(2)
