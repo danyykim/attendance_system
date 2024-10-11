@@ -82,31 +82,17 @@ if st.session_state.show_camera:
     # Status Update Section
     st.subheader('Status')
     success_placeholder = st.empty()
-    
-    already_scanned_names = set()
 
     while ctx.state.playing:
         with lock:
             if success_container["success"]:
-                names = success_container.get("names", [])  # Get recognized names
+                names = ', '.join(success_container.get("names", []))  # Join recognized names into a string
                 unknown_count = success_container.get("unknown_count", 0)  # Get unknown person count
+                success_message = f"Data has been successfully saved! Names: {names}"
+                if unknown_count > 0:
+                    success_message += f" | Unknown Persons Detected: {unknown_count}"
 
-                # Display already scanned names using st.info
-                for name in names:
-                    if name not in already_scanned_names:
-                        already_scanned_names.add(name)  # Add name to the scanned set
-                    else:
-                        # If already scanned, show a message
-                        st.info(f"Already Scanned: {name}", icon="ℹ️", unsafe_allow_html=True)
-                
-                # Create success message for newly recognized names
-                new_names = [name for name in names if name not in already_scanned_names]
-                if new_names:
-                    success_message = f"Data has been successfully saved! Names: {', '.join(new_names)}"
-                    if unknown_count > 0:
-                        success_message += f" | Unknown Persons Detected: {unknown_count}"
-                    success_placeholder.success(success_message)
-
+                success_placeholder.success(success_message)
                 time.sleep(5)
                 success_placeholder.empty()
                 success_container["success"] = False  # Reset after showing message
