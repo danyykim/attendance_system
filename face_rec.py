@@ -148,6 +148,15 @@ class RealTimePred:
                                                         test_vector=embeddings,
                                                         name_role=name_role,
                                                         thresh=thresh)
+            
+            if person_name != 'Unknown':
+                if r.sismember('attendance:scanned', person_name):
+                    cv2.putText(test_copy, "Already Scanned", (x1, y1 - 10), cv2.FONT_HERSHEY_DUPLEX, 0.7, (0, 0, 255), 2)
+                else:
+                    r.sadd('attendance:scanned', person_name)  # Add to set to mark as scanned
+            else:
+                cv2.putText(test_copy, "Unknown", (x1, y1 - 10), cv2.FONT_HERSHEY_DUPLEX, 0.7, (0, 0, 255), 2)
+            
             if person_name == 'Unknown':
                 color =(0,0,255) # bgr
             else:
