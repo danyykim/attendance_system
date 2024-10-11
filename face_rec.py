@@ -149,16 +149,10 @@ class RealTimePred:
                                                         name_role=name_role,
                                                         thresh=thresh)
             
-            if person_name != 'Unknown':
-                if r.sismember('attendance:scanned', person_name):
-                    color = (0, 255, 255)  # Yellow for already scanned
-                    # Add the name to a list to display on page1
-                    self.logs['already_scanned'].append(person_name) 
-                else:
-                    r.sadd('attendance:scanned', person_name)  # Mark as scanned
-                    color = (0, 255, 0)  # Green for newly scanned
+            if person_name == 'Unknown':
+                color =(0,0,255) # bgr
             else:
-                color = (0, 0, 255) 
+                color = (0,255,0)
 
             cv2.rectangle(test_copy,(x1,y1),(x2,y2),color)
 
