@@ -94,15 +94,21 @@ def ml_search_algorithm(dataframe,feature_column,test_vector,
 # we need to save logs for every 1 mins
 class RealTimePred:
     def __init__(self):
-        self.logs = dict(name=[],role=[],current_time=[])
+        self.logs = dict(name=[],role=[],current_time=[], action=[])
         
     def reset_dict(self):
-        self.logs = dict(name=[],role=[],current_time=[])
+        self.logs = dict(name=[],role=[],current_time=[], action=[])
         
     def saveLogs_redis(self):
     # Step 1: Create a logs DataFrame
+    
+        if st.session_state.check_in:
+            action = "Check In"
+        elif st.session_state.check_out:
+            action = "Check Out"
+            
         dataframe = pd.DataFrame(self.logs)
-
+        dataframe['Action'] = action
         # Step 2: Drop duplicate information (distinct name)
         dataframe.drop_duplicates('name', inplace=True)
 
@@ -111,13 +117,14 @@ class RealTimePred:
         name_list = dataframe['name'].tolist()
         role_list = dataframe['role'].tolist()
         ctime_list = dataframe['current_time'].tolist()
+        action_list = dataframe['Action'].tolist()
         encoded_data = []
         logged_names = []
         unknown_count = 0
 
-        for name, role, ctime in zip(name_list, role_list, ctime_list):
+        for name, role, ctime, action in zip(name_list, role_list, ctime_list, action_list):
             if name != 'Unknown':
-                concat_string = f"{name}@{role}@{ctime}"
+                concat_string = f"{name}@{role}@{ctime}@{action}"
                 encoded_data.append(concat_string)
                 logged_names.append(name)
             else:
