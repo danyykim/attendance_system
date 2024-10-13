@@ -15,24 +15,23 @@ st.subheader('Registration Form')
 # Initialize registration form
 registration_form = face_rec.RegistrationForm()
 
-with st.form(key='registration_form'):
 # Step-1: Collect person name and role
-    person_name = st.text_input(label='Name', placeholder='First & Last Name').upper()
-    role = st.selectbox(label='Select your Role', options=('Student', 'Teacher'))
-    ic_number = st.text_input(label='IC Number', placeholder='Enter your 12-digit IC Number')
+person_name = st.text_input(label='Name', placeholder='First & Last Name').upper()
+role = st.selectbox(label='Select your Role', options=('Student', 'Teacher'))
+ic_number = st.text_input(label='IC Number', placeholder='Enter your 12-digit IC Number')
 
-    # Validate IC number
-    if len(str(ic_number)) != 12:
-        st.error("IC Number must be exactly 12 digits.")
-        
-    if st.button('Check IC Number'):
-        if ic_number and ic_number.isdigit():
-            if registration_form.check_ic_exists(ic_number):
-                st.error("IC Number already registered.")
-            else:
-                st.success("IC Number is available for registration.")
+# Validate IC number
+if len(str(ic_number)) != 12:
+    st.error("IC Number must be exactly 12 digits.")
+    
+if st.button('Check IC Number'):
+    if ic_number and ic_number.isdigit():
+        if registration_form.check_ic_exists(ic_number):
+            st.error("IC Number already registered.")
         else:
-            st.error("Please enter a valid IC Number.")
+            st.success("IC Number is available for registration.")
+    else:
+        st.error("Please enter a valid IC Number.")
 
 lock = threading.Lock()
 embedding_success = {"success": False}
