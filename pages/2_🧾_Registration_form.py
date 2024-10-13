@@ -56,7 +56,7 @@ ctx = webrtc_streamer(key='registration', video_frame_callback=video_callback_fu
 
 if ctx.state.playing:
     with lock:
-            if embedding_success['success']:
+            if embedding_success:
                 st.success("Facial embedding captured successfully!")
                 
 # Step-3: Save the data in Redis database
