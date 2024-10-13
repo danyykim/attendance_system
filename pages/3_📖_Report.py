@@ -47,6 +47,12 @@ with tab3:
     split_string = lambda x: x.split('@')
     logs_nested_list = list(map(split_string, logs_list_string))
     
+    
+    st.write("Logs Nested List:", logs_nested_list)  # Debugging step
+
+    # Handle cases where logs_nested_list has 3 or 4 elements
+    logs_nested_list = [row for row in logs_nested_list if len(row) == 4]
+    
     logs_df = pd.DataFrame(logs_nested_list, columns=['Name', 'Role', 'Timestamp', 'Action'])
 
     logs_df["Timestamp"] = pd.to_datetime(logs_df['Timestamp'], format="%Y-%m-%d %H:%M:%S", errors='coerce')
