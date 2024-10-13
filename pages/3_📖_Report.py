@@ -47,19 +47,19 @@ with tab3:
     split_string = lambda x: x.split('@')
     logs_nested_list = list(map(split_string, logs_list_string))
     
-    logs_df = pd.DataFrame(logs_nested_list, columns=['Name', 'Role', 'Timestamp'])
+    logs_df = pd.DataFrame(logs_nested_list, columns=['Name', 'Role', 'Timestamp', 'Action'])
 
     logs_df["Timestamp"] = pd.to_datetime(logs_df['Timestamp'], format="%Y-%m-%d %H:%M:%S", errors='coerce')
     logs_df["Date"] = logs_df['Timestamp'].dt.date
     
-    report_df = logs_df.groupby(by=['Date', 'Name', 'Role']).agg(
-        In_time=pd.NamedAgg('Timestamp', 'min'),
-        Out_time=pd.NamedAgg('Timestamp', 'max'),
-    ).reset_index()
+    check_in_df = logs_df[logs_df['Action'] == 'Check In'].copy()
+    check_out_df = logs_df[logs_df['Action'] == 'Check Out'].copy()
     
-    report_df['In_time'] = pd.to_datetime(report_df['In_time'])
-    report_df['Out_time'] = pd.to_datetime(report_df['Out_time'])
+    report_df = pd.merge(check_in_df, check_out_df, on=['Name', 'Role', 'Date'], suffixes=('_in', '_out'))
+    
+    report_df['In_time'] = report_df['Timestamp_in']
+    report_df['Out_time'] = report_df['Timestamp_out']
     report_df['Duration'] = report_df['Out_time'] - report_df['In_time']
 
     report_df.index += 1  # Shift index to start from 1
-    st.dataframe(report_df)
+    st.dataframe(report_df[['Name', 'Role', 'Date', 'In_time', 'Out_time', 'Duration']])
