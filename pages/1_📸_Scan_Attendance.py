@@ -27,7 +27,6 @@ if not st.session_state.check_in and not st.session_state.check_out:
         if st.button('Check In'):
             st.session_state.check_in = True
             st.session_state.show_camera = True
-            st.subheader('Check In')
             st.session_state.check_out = False
     with col2:
         if st.button('Check Out'):
@@ -44,8 +43,12 @@ if st.session_state.show_camera:
         st.session_state.check_in = False
         st.session_state.check_out = False
         st.rerun()
+    
+    if st.session_state.check_in:
+        st.subheader('Check In')
+    elif st.session_state.check_out:
+        st.subheader('Check Out')
         
-
     # Retrieve data from Redis
     with st.spinner('Retrieving Data from Redis DB ...'):
         redis_face_db = face_rec.retrive_data(name='academy:register')
