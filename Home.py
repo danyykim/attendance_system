@@ -6,6 +6,16 @@ import face_rec
 
 st.set_page_config(page_title='Attendance System', layout='wide')
 
+st.markdown(
+    """
+    <style>
+    body {
+        background-color: #BF4E9C;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 # User authentication
 names = ["Danieal"]
 usernames = ["nyel"]
@@ -33,13 +43,3 @@ else:
         st.success('Model loaded successfully')
         st.success('Redis db successfully connected')
         
-st.markdown(
-    """
-    <style>
-    body {
-        background-color: #BF4E9C;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
