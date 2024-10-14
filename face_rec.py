@@ -89,6 +89,13 @@ def ml_search_algorithm(dataframe,feature_column,test_vector,
         
     return person_name, person_role
 
+def check_out(person_name):
+    check_in_status = r.hget('attendance:status', person_name)
+    
+    if check_in_status == 'checked_in':
+        r.hdel('attendance:status', person_name)  # Remove check-in status
+        return True
+    return False
 
 ### Real Time Prediction
 # we need to save logs for every 1 mins
@@ -141,8 +148,6 @@ class RealTimePred:
         test_copy = test_image.copy()
         # step-2: use for loop and extract each embedding and pass to ml_search_algorithm
 
-        checked_in_users = set()
-
         for res in results:
             x1, y1, x2, y2 = res['bbox'].astype(int)
             embeddings = res['embedding']
@@ -152,15 +157,22 @@ class RealTimePred:
                                                         name_role=name_role,
                                                         thresh=thresh)
             
-            if person_name == 'Unknown':
-                color =(0,0,255) # bgr
-            else:
-                # Check if this person has already checked in
-                if person_name in checked_in_users:
-                    color = (255, 255, 0)  # yellow for re-check in
+            if person_name != 'Unknown':
+                check_in_status = r.hget('attendance:status', person_name)
+
+                if check_in_status is None:  # If user is not checked in
+                    # Allow check-in
+                    r.hset('attendance:status', person_name, 'checked_in')
+                    action = "Check In"
+                    color = (0, 255, 0)  # Green for valid check-in
                 else:
-                    color = (0, 255, 0)  # green for first check in
-                    checked_in_users.add(person_name)  # Add to checked-in set
+                    # User is already checked in, show that they need to check out first
+                    action = "Already Checked In"
+                    color = (0, 255, 255)  # Yellow for need to check out
+                    # Optionally, you can keep track of how many attempts they make to check in without checking out
+
+            else:
+                color = (0, 0, 255)  # Red for unknown
 
             cv2.rectangle(test_copy,(x1,y1),(x2,y2),color)
 

@@ -8,7 +8,6 @@ import threading
 # Threading lock for thread-safe access
 lock = threading.Lock()
 success_container = {"success": False}  # Shared container
-scanned_users = set()
 
 # Set up the layout with buttons
 st.subheader('Attendance System')
@@ -73,16 +72,6 @@ if st.session_state.show_camera:
             img, redis_face_db, 'facial_features', ['Name', 'Role'], thresh=0.5, action=action
         )
         
-        # Check for repeated scans (yellow rectangles) and update scanned_users
-        for name in realtimepred.logs['name']:
-            if name != 'Unknown':
-                if name in scanned_users:
-                    # If the person is already checked in, do not add again
-                    pass
-                else:
-                    # New check-in, add to scanned_users
-                    scanned_users.add(name)
-        
         timenow = time.time()
         difftime = timenow - setTime
 
@@ -112,14 +101,6 @@ if st.session_state.show_camera:
                 names = ', '.join(success_container.get("names", []))  # Join recognized names into a string
                 unknown_count = success_container.get("unknown_count", 0)  # Get unknown person count
                 success_message = f"Data has been successfully saved! Names: {names}"
-                
-                yellow_warning_message = ""
-                for user in scanned_users:
-                    if user not in success_container.get("names", []):
-                        yellow_warning_message += f"{user} has already checked in and not checked out! | "
-
-                if yellow_warning_message:
-                    success_message += " | " + yellow_warning_message
                 if unknown_count > 0:
                     success_message += f" | Unknown Persons Detected: {unknown_count}"
 
