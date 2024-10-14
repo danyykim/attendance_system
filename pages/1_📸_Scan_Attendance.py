@@ -4,7 +4,15 @@ from streamlit_webrtc import webrtc_streamer
 import av
 import time
 import threading
+import redis
 
+hostname = 'redis-10380.c240.us-east-1-3.ec2.redns.redis-cloud.com'
+portnumber = '10380'
+password = '6z4TqpJEaYTnp6dy9renIRjJV3Enlj9i'
+
+r = redis.StrictRedis(host=hostname,
+                      port=portnumber,
+                      password=password)
 # Threading lock for thread-safe access
 lock = threading.Lock()
 success_container = {"success": False, "action": None}  # Shared container
@@ -79,13 +87,25 @@ if st.session_state.show_camera:
             logged_names, unknown_count = realtimepred.saveLogs_redis()
             setTime = time.time()  # Reset time
             
+            for name in logged_names:
+                check_in_status = r.hget('attendance:status', name)  # Retrieve their status from Redis
+
+                if check_in_status == b'checked_in':
+                    # If they have already been checked in, set the action to "Already Checked In"
+                    r.hset('attendance:status', name, 'already_scanned')
             # Thread-safe access
             with lock:
                 success_container["success"] = True
                 success_container["names"] = logged_names
                 success_container["unknown_count"]  = unknown_count
-                success_container["action"] = action
-
+                
+                for name in logged_names:
+                    check_in_status = r.hget('attendance:status', name)
+                    if check_in_status == b'already_scanned':
+                        success_container["action"] = "Already Checked In"
+                    else:
+                        success_container["action"] = action  # Regular check-in or check-out
+                        
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
     ctx = webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callback, rtc_configuration={
