@@ -159,9 +159,16 @@ class RealTimePred:
                     color = (0, 255, 0)  # Green for valid check-in
                     already_checked_in = False  # User is not already checked in
                 else:
-                    action = "Already Checked In"
-                    color = (0, 255, 255)  # Yellow for need to check out
-                    already_checked_in = True  # User is already checked in
+                    # Check if the data has been logged successfully
+                    logged_names, _ = self.saveLogs_redis()  # Log the data
+                    if person_name in logged_names:  # If the person is in logged names
+                        action = "Already Checked In"
+                        color = (0, 255, 255)  # Yellow for need to check out
+                        already_checked_in = True  # User is already checked in
+                    else:
+                        action = "Check In"
+                        color = (0, 255, 0)  # Green for valid check-in
+                        already_checked_in = False  # User is not already checked in
             else:
                 color = (0, 0, 255)  # Red for unknown
                 already_checked_in = False  # Unknown user
