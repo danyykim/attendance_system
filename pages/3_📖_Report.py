@@ -59,7 +59,10 @@ with tab3:
     
     report_df['In_time'] = report_df['Timestamp_in']
     report_df['Out_time'] = report_df['Timestamp_out'].fillna('Pending')
-    report_df['Duration'] = report_df['Out_time'] - report_df['In_time'].apply(lambda x: 'Pending' if x == 'Pending' else pd.to_datetime(x) - report_df['In_time'])
 
+    report_df['Duration'] = report_df.apply(
+        lambda row: row['Out_time'] - row['In_time'] if pd.notnull(row['Out_time']) else 'Pending',
+        axis=1
+    )
     report_df.index += 1  # Shift index to start from 1
     st.dataframe(report_df[['Name', 'Role', 'Date', 'In_time', 'Out_time', 'Duration']])
