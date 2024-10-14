@@ -58,11 +58,15 @@ with tab3:
     report_df = pd.merge(check_in_df, check_out_df, on=['Name', 'Role', 'Date'], how='left', suffixes=('_in', '_out'))
     
     report_df['In_time'] = report_df['Timestamp_in']
-    report_df['Out_time'] = report_df['Timestamp_out'].fillna('Pending')
+    report_df['Out_time'] = report_df['Timestamp_out']
 
-    report_df['Duration'] = report_df.apply(
-        lambda row: row['Out_time'] - row['In_time'] if pd.notnull(row['Out_time']) else 'Pending',
-        axis=1
-    )
+    def calculate_duration(row):
+        if pd.isnull(row['Out_time']):
+            return 'Pending'
+        else:
+            return row['Out_time'] - row['In_time']
+
+    report_df['Duration'] = report_df.apply(calculate_duration, axis=1)
+    
     report_df.index += 1  # Shift index to start from 1
     st.dataframe(report_df[['Name', 'Role', 'Date', 'In_time', 'Out_time', 'Duration']])
