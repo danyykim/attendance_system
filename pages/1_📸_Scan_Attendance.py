@@ -27,6 +27,7 @@ if not st.session_state.check_in and not st.session_state.check_out:
         if st.button('Check In'):
             st.session_state.check_in = True
             st.session_state.show_camera = True
+            st.subheader('Check In')
             st.session_state.check_out = False
     with col2:
         if st.button('Check Out'):
@@ -43,6 +44,7 @@ if st.session_state.show_camera:
         st.session_state.check_in = False
         st.session_state.check_out = False
         st.rerun()
+        
 
     # Retrieve data from Redis
     with st.spinner('Retrieving Data from Redis DB ...'):
