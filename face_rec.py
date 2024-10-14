@@ -153,21 +153,18 @@ class RealTimePred:
             if person_name != 'Unknown':
                 check_in_status = r.hget('attendance:status', person_name)
 
-                if check_in_status == b'checked_in':
-                    # Person is already checked in, show yellow
-                    action = "Already Checked In"
-                    color = (0, 255, 255)  # Yellow for need to check out
-                elif check_in_status == b'already_scanned':
-                    # This happens after they’ve been logged successfully
-                    color = (0, 255, 255)  # Yellow for already scanned but not checked out
-                else:
-                    # Normal check-in
+                if check_in_status is None:  # User is not checked in
                     r.hset('attendance:status', person_name, 'checked_in')
                     action = "Check In"
                     color = (0, 255, 0)  # Green for valid check-in
-
+                    already_checked_in = False  # User is not already checked in
+                else:
+                    action = "Already Checked In"
+                    color = (0, 255, 255)  # Yellow for need to check out
+                    already_checked_in = True  # User is already checked in
             else:
                 color = (0, 0, 255)  # Red for unknown
+                already_checked_in = False  # Unknown user
                 
             cv2.rectangle(test_copy,(x1,y1),(x2,y2),color)
 
@@ -180,7 +177,7 @@ class RealTimePred:
             self.logs['current_time'].append(current_time)
             self.logs['action'].append(action)
             
-        return test_copy
+        return test_copy, already_checked_in
 
 
 #### Registration Form

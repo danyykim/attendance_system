@@ -76,7 +76,7 @@ if st.session_state.show_camera:
     def video_frame_callback(frame):
         global setTime
         img = frame.to_ndarray(format="bgr24")
-        pred_img = realtimepred.face_prediction(
+        pred_img, already_checked_in = realtimepred.face_prediction(
             img, redis_face_db, 'facial_features', ['Name', 'Role'], thresh=0.5, action=action
         )
         
@@ -87,24 +87,13 @@ if st.session_state.show_camera:
             logged_names, unknown_count = realtimepred.saveLogs_redis()
             setTime = time.time()  # Reset time
             
-            for name in logged_names:
-                check_in_status = r.hget('attendance:status', name)  # Retrieve their status from Redis
-
-                if check_in_status == b'checked_in':
-                    # If they have already been checked in, set the action to "Already Checked In"
-                    r.hset('attendance:status', name, 'already_scanned')
-            # Thread-safe access
             with lock:
                 success_container["success"] = True
                 success_container["names"] = logged_names
                 success_container["unknown_count"]  = unknown_count
-                
-                for name in logged_names:
-                    check_in_status = r.hget('attendance:status', name)
-                    if check_in_status == b'already_scanned':
-                        success_container["action"] = "Already Checked In"
-                    else:
-                        success_container["action"] = action  # Regular check-in or check-out
+                success_container["action"] = action
+                success_container["already_checked_in"] = already_checked_in  # Store checked-in status
+              
                         
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
@@ -122,16 +111,18 @@ if st.session_state.show_camera:
                 names = ', '.join(success_container.get("names", []))  # Join recognized names into a string
                 unknown_count = success_container.get("unknown_count", 0)  # Get unknown person count
                 action_status = success_container.get("action", "Unknown")  # Get action status
+                already_checked_in = success_container.get("already_checked_in", False)  # Get checked-in status
                 
                 if action_status == "Check In":
-                    success_message = f"Checked In: {names}"
-                elif action_status == "Already Checked In":
-                    success_message = f"Already Checked In: {names}"
+                    if already_checked_in:  # User is already checked in
+                        success_message = f"Already Checked In: {names}"
+                    else:
+                        success_message = f"Checked In: {names}"
                 elif action_status == "Check Out":
                     success_message = f"Checked Out: {names}"
                 else:
                     success_message = f"Unknown action for {names}"
-
+               
                 if unknown_count > 0:
                     success_message += f" | Unknown Persons Detected: {unknown_count}"
 
