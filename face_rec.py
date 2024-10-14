@@ -141,6 +141,8 @@ class RealTimePred:
         test_copy = test_image.copy()
         # step-2: use for loop and extract each embedding and pass to ml_search_algorithm
 
+        checked_in_users = set()
+
         for res in results:
             x1, y1, x2, y2 = res['bbox'].astype(int)
             embeddings = res['embedding']
@@ -153,7 +155,12 @@ class RealTimePred:
             if person_name == 'Unknown':
                 color =(0,0,255) # bgr
             else:
-                color = (0,255,0)
+                # Check if this person has already checked in
+                if person_name in checked_in_users:
+                    color = (255, 255, 0)  # yellow for re-check in
+                else:
+                    color = (0, 255, 0)  # green for first check in
+                    checked_in_users.add(person_name)  # Add to checked-in set
 
             cv2.rectangle(test_copy,(x1,y1),(x2,y2),color)
 
