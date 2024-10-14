@@ -101,23 +101,17 @@ class RealTimePred:
         
     def saveLogs_redis(self):
     # Step 1: Create a logs DataFrame
-    
-        if st.session_state.check_in:
-            action = "Check In"
-        elif st.session_state.check_out:
-            action = "Check Out"
             
         dataframe = pd.DataFrame(self.logs)
-        dataframe['Action'] = action
         # Step 2: Drop duplicate information (distinct name)
-        dataframe.drop_duplicates('name', inplace=True)
+        dataframe.drop_duplicates(['name', 'action'], inplace=True)
 
         # Step 3: Push data to Redis database (list)
         # Encode the data
         name_list = dataframe['name'].tolist()
         role_list = dataframe['role'].tolist()
         ctime_list = dataframe['current_time'].tolist()
-        action_list = dataframe['Action'].tolist()
+        action_list = dataframe['action'].tolist()
         encoded_data = []
         logged_names = []
         unknown_count = 0
@@ -138,7 +132,7 @@ class RealTimePred:
         return logged_names, unknown_count
 
     def face_prediction(self,test_image, dataframe,feature_column,
-                            name_role=['Name','Role'],thresh=0.5):
+                            name_role=['Name','Role'],thresh=0.5, action="Check In"):
         # step-1: find the time
         current_time = get_current_time()
         
@@ -170,6 +164,7 @@ class RealTimePred:
             self.logs['name'].append(person_name)
             self.logs['role'].append(person_role)
             self.logs['current_time'].append(current_time)
+            self.logs['action'].append(action)
             
         return test_copy
 

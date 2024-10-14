@@ -53,18 +53,25 @@ if st.session_state.show_camera:
     setTime = time.time()
     realtimepred = face_rec.RealTimePred()
 
+    if st.session_state.check_in:
+        action = "Check In"
+    elif st.session_state.check_out:
+        action = "Check Out"
+    else:
+        action = None
+        
     def video_frame_callback(frame):
         global setTime
         img = frame.to_ndarray(format="bgr24")
         pred_img = realtimepred.face_prediction(
-            img, redis_face_db, 'facial_features', ['Name', 'Role'], thresh=0.5
+            img, redis_face_db, 'facial_features', ['Name', 'Role'], thresh=0.5, action=action
         )
         
         timenow = time.time()
         difftime = timenow - setTime
 
         if difftime >= waitTime:
-            logged_names, unknown_count = realtimepred.saveLogs_redis()
+            logged_names, unknown_count = realtimepred.saveLogs_redis(action=action)
             setTime = time.time()  # Reset time
             
             # Thread-safe access

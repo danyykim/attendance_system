@@ -55,11 +55,11 @@ with tab3:
     check_in_df = logs_df[logs_df['Action'] == 'Check In'].copy()
     check_out_df = logs_df[logs_df['Action'] == 'Check Out'].copy()
     
-    report_df = pd.merge(check_in_df, check_out_df, on=['Name', 'Role', 'Date'], suffixes=('_in', '_out'))
+    report_df = pd.merge(check_in_df, check_out_df, on=['Name', 'Role', 'Date'], how='left', suffixes=('_in', '_out'))
     
     report_df['In_time'] = report_df['Timestamp_in']
-    report_df['Out_time'] = report_df['Timestamp_out']
-    report_df['Duration'] = report_df['Out_time'] - report_df['In_time']
+    report_df['Out_time'] = report_df['Timestamp_out'].fillna('Pending')
+    report_df['Duration'] = report_df['Out_time'] - report_df['In_time'].apply(lambda x: 'Pending' if x == 'Pending' else pd.to_datetime(x) - report_df['In_time'])
 
     report_df.index += 1  # Shift index to start from 1
     st.dataframe(report_df[['Name', 'Role', 'Date', 'In_time', 'Out_time', 'Duration']])
