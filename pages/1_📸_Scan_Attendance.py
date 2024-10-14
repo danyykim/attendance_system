@@ -7,7 +7,7 @@ import threading
 
 # Threading lock for thread-safe access
 lock = threading.Lock()
-success_container = {"success": False}  # Shared container
+success_container = {"success": False, "action": None}  # Shared container
 
 # Set up the layout with buttons
 st.subheader('Attendance System')
@@ -84,6 +84,7 @@ if st.session_state.show_camera:
                 success_container["success"] = True
                 success_container["names"] = logged_names
                 success_container["unknown_count"]  = unknown_count
+                success_container["action"] = action
 
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
@@ -100,7 +101,17 @@ if st.session_state.show_camera:
             if success_container["success"]:
                 names = ', '.join(success_container.get("names", []))  # Join recognized names into a string
                 unknown_count = success_container.get("unknown_count", 0)  # Get unknown person count
-                success_message = f"Data has been successfully saved! Names: {names}"
+                action_status = success_container.get("action", "Unknown")  # Get action status
+                
+                if action_status == "Check In":
+                    success_message = f"Checked In: {names}"
+                elif action_status == "Already Checked In":
+                    success_message = f"Already Checked In: {names}"
+                elif action_status == "Check Out":
+                    success_message = f"Checked Out: {names}"
+                else:
+                    success_message = f"Unknown action for {names}"
+
                 if unknown_count > 0:
                     success_message += f" | Unknown Persons Detected: {unknown_count}"
 
