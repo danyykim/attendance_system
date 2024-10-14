@@ -150,10 +150,21 @@ class RealTimePred:
                                                         name_role=name_role,
                                                         thresh=thresh)
             
-            if person_name == 'Unknown':
-                color =(0,0,255) # bgr
+            if person_name != 'Unknown':
+                check_in_status = r.hget('attendance:status', person_name)
+
+                if check_in_status is None:  # If user is not checked in
+                    # Allow check-in
+                    r.hset('attendance:status', person_name, 'checked_in')
+                    action = "Check In"
+                    color = (0, 255, 0)  # Green for valid check-in
+                else:
+                    # User is already checked in, show that they need to check out first
+                    action = "Already Checked In"
+                    color = (0, 255, 255)  # Yellow for need to check out (visual indication only)
+
             else:
-                color = (0,255,0)
+                color = (0, 0, 255)  # Red for unknown
 
             cv2.rectangle(test_copy,(x1,y1),(x2,y2),color)
 

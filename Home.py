@@ -6,16 +6,6 @@ import face_rec
 
 st.set_page_config(page_title='Attendance System', layout='wide')
 
-st.markdown(
-    """
-    <style>
-    .stApp {
-        background-color: lightblue;  /* Change this to your desired background color */
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
 # User authentication
 names = ["Danieal"]
 usernames = ["nyel"]
