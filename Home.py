@@ -9,8 +9,8 @@ st.set_page_config(page_title='Attendance System', layout='wide')
 st.markdown(
     """
     <style>
-    body {
-        background-color: #BF4E9C;
+    .stApp {
+        background-color: lightblue;  /* Change this to your desired background color */
     }
     </style>
     """,
