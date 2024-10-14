@@ -32,3 +32,14 @@ else:
     with st.spinner("Loading Models and Connecting to Redis db ..."):
         st.success('Model loaded successfully')
         st.success('Redis db successfully connected')
+        
+st.markdown(
+    """
+    <style>
+    body {
+        background-color: #BF4E9C;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
