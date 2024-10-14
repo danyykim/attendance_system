@@ -153,24 +153,18 @@ class RealTimePred:
             if person_name != 'Unknown':
                 check_in_status = r.hget('attendance:status', person_name)
 
-            # Allow initial check-in
-                if action == "Check In":
-                    if check_in_status is None:  # User not checked in
-                        # Check-in process
-                        r.hset('attendance:status', person_name, 'checked_in')
-                        action = "Check In"
-                        color = (0, 255, 0)  # Green for valid check-in
-                    else:
-                        # User already checked in, needs to check out
-                        action = "Already Checked In"
-                        color = (0, 255, 255)  # Yellow for need to check out
-                
-                # Check-out logic (for when they are trying to check out)
-                if action == "Check Out" and check_in_status == 'checked_in':
-                    # Mark user as checked out
-                    r.hset('attendance:status', person_name, 'checked_out')
-                    action = "Check Out"
-                    color = (0, 0, 255)  # Red for checkout process
+                if check_in_status == b'checked_in':
+                    # Person is already checked in, show yellow
+                    action = "Already Checked In"
+                    color = (0, 255, 255)  # Yellow for need to check out
+                elif check_in_status == b'already_scanned':
+                    # This happens after they’ve been logged successfully
+                    color = (0, 255, 255)  # Yellow for already scanned but not checked out
+                else:
+                    # Normal check-in
+                    r.hset('attendance:status', person_name, 'checked_in')
+                    action = "Check In"
+                    color = (0, 255, 0)  # Green for valid check-in
 
             else:
                 color = (0, 0, 255)  # Red for unknown
