@@ -135,7 +135,7 @@ class RealTimePred:
                             name_role=['Name','Role'],thresh=0.5, action="Check In"):
         # step-1: find the time
         current_time = get_current_time()
-        current_time_seconds = time.time()  
+        
         # step-1: take the test image and apply to insight face
         results = faceapp.get(test_image)
         test_copy = test_image.copy()
@@ -150,44 +150,10 @@ class RealTimePred:
                                                         name_role=name_role,
                                                         thresh=thresh)
             
-            color = (0, 0, 255)
-
-            if person_name != 'Unknown':
-                # Fetch the attendance logs from Redis
-                logs = r.lrange('attendance:logs', 0, -1)
-                duplicate_detected = False
-
-                for log_entry in logs:
-                    log_entry_str = log_entry.decode('utf-8')  # Decode Redis log entry
-                    log_parts = log_entry_str.split('@')  # Split log entry by '@'
-                    
-                    # Ensure we have the expected number of parts (name, role, time, action)
-                    if len(log_parts) == 4:
-                        name_in_log, role_in_log, log_time, log_action = log_parts
-                        
-                        # Debugging: Check if log_action is properly accessed
-                        print(f"Log action detected: {log_action}")
-
-                        # Check name and role match
-                        if name_in_log == person_name and role_in_log == person_role:
-                            # Convert log time to seconds
-                            log_time_seconds = time.mktime(datetime.strptime(log_time, "%Y-%m-%d %H:%M:%S").timetuple())
-
-                            # If logged within the last 10 seconds
-                            if current_time_seconds - log_time_seconds < 10:
-                                duplicate_detected = True
-                                break
-
-                if duplicate_detected:
-                    action = "Already Checked In"
-                    color = (0, 255, 255)  # Yellow for "already checked in"
-                else:
-                    action = "Check In"
-                    color = (0, 255, 0)  # Green for "valid check-in" 
-               
-                    
-        # Step-5: Draw rectangle and label
-
+            if person_name == 'Unknown':
+                color =(0,0,255) # bgr
+            else:
+                color = (0,255,0)
 
             cv2.rectangle(test_copy,(x1,y1),(x2,y2),color)
 
