@@ -78,7 +78,7 @@ if st.session_state.show_camera:
         difftime = timenow - setTime
 
         if difftime >= waitTime:
-            logged_names, unknown_count, already_checked_in = realtimepred.saveLogs_redis(action)
+            logged_names, unknown_count, already_checked_in = realtimepred.saveLogs_redis()
             setTime = time.time()  # Reset time
             
             # Thread-safe access
