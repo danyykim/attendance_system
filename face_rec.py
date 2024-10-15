@@ -111,7 +111,6 @@ class RealTimePred:
         name_list = dataframe['name'].tolist()
         role_list = dataframe['role'].tolist()
         ctime_list = dataframe['current_time'].tolist()
-        action_list = dataframe['action'].tolist()
         encoded_data = []
         logged_names = []
         unknown_count = 0
