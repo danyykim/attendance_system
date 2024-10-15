@@ -116,6 +116,7 @@ class RealTimePred:
         logged_names = []
         unknown_count = 0
         already_checked_in = []
+        already_checked_out = []
         
         current_logs = r.lrange('attendance:logs', 0, -1)
         existing_names = {log.decode().split('@')[0] for log in current_logs}  # Set of names already logged
@@ -135,6 +136,8 @@ class RealTimePred:
                         encoded_data.append(concat_string)
                         logged_names.append(name)
                         existing_names.remove(name)
+                    else:
+                        already_checked_out.append(name)
                 else:
                  unknown_count += 1
                  
@@ -146,7 +149,7 @@ class RealTimePred:
 
             self.reset_dict() 
         
-        return logged_names, unknown_count, already_checked_in
+        return logged_names, unknown_count, already_checked_in, already_checked_out
 
     def face_prediction(self,test_image, dataframe,feature_column,
                             name_role=['Name','Role'],thresh=0.5, action="Check In"):
