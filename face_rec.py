@@ -142,7 +142,7 @@ class RealTimePred:
         return logged_names, unknown_count, already_checked_in
 
     def face_prediction(self,test_image, dataframe,feature_column,
-                            name_role=['Name','Role'],thresh=0.5, action="Check In"):
+                            name_role=['Name','Role'],thresh=0.5):
         # step-1: find the time
         current_time = get_current_time()
         
