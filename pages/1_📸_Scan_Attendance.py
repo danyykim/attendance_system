@@ -7,7 +7,7 @@ import threading
 
 # Threading lock for thread-safe access
 lock = threading.Lock()
-success_container = {"success": False}  # Shared container
+success_container = {"success": False, "already_checked_in": False}  # Shared container
 
 # Set up the layout with buttons
 st.subheader('Attendance System')
@@ -84,6 +84,7 @@ if st.session_state.show_camera:
             # Thread-safe access
             with lock:
                 success_container["success"] = True
+                success_container["already_checked_in"] = (len(logged_names) == 0)  # If no new names were logged
                 success_container["names"] = logged_names
                 success_container["unknown_count"]  = unknown_count
 
@@ -105,7 +106,12 @@ if st.session_state.show_camera:
             if success_container["success"]:
                 names = ', '.join(success_container.get("names", []))  # Join recognized names into a string
                 unknown_count = success_container.get("unknown_count", 0)  # Get unknown person count
-                success_message = f"Data has been successfully saved! Names: {names}"
+
+                if success_container["already_checked_in"]:
+                    success_message = "Already marked! No new logs."
+                else:
+                    success_message = f"Data has been successfully saved! Names: {names}"
+
                 if unknown_count > 0:
                     success_message += f" | Unknown Persons Detected: {unknown_count}"
                     if not st.session_state.audio_played:
