@@ -124,22 +124,19 @@ class RealTimePred:
         for name, role, ctime, action in zip(name_list, role_list, ctime_list, action_list):
             if name != 'Unknown':
                 if action == "Check In":
-                    if name not in existing_names:  # Check for duplicates
-                        concat_string = f"{name}@{role}@{ctime}@{action}"
-                        encoded_data.append(concat_string)
-                        logged_names.append(name)
-                    else:
+                    if name in existing_names and existing_names[name] == "Check In":
                         already_checked_in.append(name)
-                elif action == "Check Out":
-                    if name in existing_names:
+                    else:
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
-                        existing_names.remove(name)
-                    else:
+                elif action == "Check Out":
+                    if name in existing_names and existing_names[name] == "Check Out":
                         already_checked_out.append(name)
-                else:
-                 unknown_count += 1
+                    else:
+                        concat_string = f"{name}@{role}@{ctime}@{action}"
+                        encoded_data.append(concat_string)
+                        logged_names.append(name)
                  
             else:
                 unknown_count += 1
