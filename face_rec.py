@@ -115,15 +115,21 @@ class RealTimePred:
         encoded_data = []
         logged_names = []
         unknown_count = 0
+        
+        current_logs = r.lrange('attendance:logs', 0, -1)
+        existing_names = {log.decode().split('@')[0] for log in current_logs}  # Set of names already logged
 
         for name, role, ctime, action in zip(name_list, role_list, ctime_list, action_list):
             if name != 'Unknown':
-                concat_string = f"{name}@{role}@{ctime}@{action}"
-                encoded_data.append(concat_string)
-                logged_names.append(name)
+                if name not in existing_names:  # Check for duplicates
+                    concat_string = f"{name}@{role}@{ctime}@{action}"
+                    encoded_data.append(concat_string)
+                    logged_names.append(name)
+                else:
+                    st.warning(f"{name} sudah ada dalam logs!")  # Optionally show a warning
             else:
                 unknown_count += 1
-
+                
         if len(encoded_data) > 0:
             r.lpush('attendance:logs', *encoded_data)
 
