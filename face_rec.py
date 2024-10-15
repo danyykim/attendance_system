@@ -99,7 +99,7 @@ class RealTimePred:
     def reset_dict(self):
         self.logs = dict(name=[],role=[],current_time=[], action=[])
         
-    def saveLogs_redis(self):
+    def saveLogs_redis(self, action):
     # Step 1: Create a logs DataFrame
             
         dataframe = pd.DataFrame(self.logs)
@@ -125,12 +125,17 @@ class RealTimePred:
 
         for name, role, ctime, action in zip(name_list, role_list, ctime_list, action_list):
             if name != 'Unknown':
-                if name not in existing_names or action == "Check Out":  # Check for duplicates
+                if action == "Check In":
+                    if name not in existing_names:  # Check for duplicates
+                        concat_string = f"{name}@{role}@{ctime}@{action}"
+                        encoded_data.append(concat_string)
+                        logged_names.append(name)
+                    else:
+                        already_checked_in.append(name)
+                else:
                     concat_string = f"{name}@{role}@{ctime}@{action}"
                     encoded_data.append(concat_string)
                     logged_names.append(name)
-                elif action == "Check In":
-                    already_checked_in.append(name)
             else:
                 unknown_count += 1
                 
@@ -142,7 +147,7 @@ class RealTimePred:
         return logged_names, unknown_count, already_checked_in
 
     def face_prediction(self,test_image, dataframe,feature_column,
-                            name_role=['Name','Role'],thresh=0.5):
+                            name_role=['Name','Role'],thresh=0.5, action="Check In"):
         # step-1: find the time
         current_time = get_current_time()
         
