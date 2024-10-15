@@ -135,7 +135,7 @@ class RealTimePred:
                             name_role=['Name','Role'],thresh=0.5, action="Check In"):
         # step-1: find the time
         current_time = get_current_time()
-        
+        current_time_seconds = time.time()  
         # step-1: take the test image and apply to insight face
         results = faceapp.get(test_image)
         test_copy = test_image.copy()
@@ -151,29 +151,42 @@ class RealTimePred:
                                                         thresh=thresh)
             
             already_checked_in = False
-            color = (0, 0, 255)  # Red for unknown user
+            color = (0, 0, 255)  # Default red for unknown
             
             if person_name != 'Unknown':
-                # Step-3: Check if the person is already checked in (from Redis status)
-                check_in_status = r.hget('attendance:status', person_name)
+                # Fetch the attendance logs from Redis
+                logs = r.lrange('attendance:logs', 0, -1)
+                duplicate_detected = False
                 
-                if check_in_status is None:  # First time check-in
-                    r.hset('attendance:status', person_name, 'checked_in')
-                    action = "Check In"
-                    color = (0, 255, 0)  # Green for valid check-in
-                    already_checked_in = False  # Not yet checked in
+                for log_entry in logs:
+                    log_entry_str = log_entry.decode('utf-8')  # Decode Redis log entry
+                    log_parts = log_entry_str.split('@')  # Split log entry by '@'
                     
+                    # Ensure the log entry has all the expected parts (name@role@time@action)
+                    if len(log_parts) == 4:
+                        name_in_log, role_in_log, log_time, log_action = log_parts
+                    else:
+                        continue  # Skip malformed log entries
+                    
+                    # Convert log time to seconds
+                    log_time_seconds = time.mktime(datetime.strptime(log_time, "%Y-%m-%d %H:%M:%S").timetuple())
+                    
+                    # Compare the name and check if it's been logged within the last 10 seconds
+                    if name_in_log == person_name and (current_time_seconds - log_time_seconds < 10):
+                        duplicate_detected = True
+                        break
+
+                if duplicate_detected:
+                    # If the person is found in the logs within the last 10 seconds
+                    action = "Already Checked In"
+                    color = (0, 255, 255)  # Yellow
+                    already_checked_in = True
                 else:
-                    # Step-4: Check if the logs have been updated in the last cycle (10 seconds)
-                    if person_name in self.logs['name']:  # This means they've been logged
-                        action = "Already Checked In"
-                        color = (0, 255, 255)  # Yellow for already checked in
-                        already_checked_in = True  # User is already checked in
-                        
-                    else:  # Data hasn't been saved yet, keep it green
-                        action = "Check In"
-                        color = (0, 255, 0)  # Keep it green until saved to logs
-                        already_checked_in = True
+                    # Not in the logs within the last 10 seconds, treat as new check-in
+                    action = "Check In"
+                    color = (0, 255, 0)  # Green
+                    already_checked_in = False
+               
                     
         # Step-5: Draw rectangle and label
 
@@ -189,7 +202,7 @@ class RealTimePred:
             self.logs['current_time'].append(current_time)
             self.logs['action'].append(action)
             
-        return test_copy
+        return test_copy, already_checked_in
 
 
 #### Registration Form
