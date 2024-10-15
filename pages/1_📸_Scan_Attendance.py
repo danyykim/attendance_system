@@ -78,7 +78,7 @@ if st.session_state.show_camera:
         difftime = timenow - setTime
 
         if difftime >= waitTime:
-            logged_names, unknown_count, already_checked_in = realtimepred.saveLogs_redis(action)
+            logged_names, unknown_count, already_checked_in, already_checked_out = realtimepred.saveLogs_redis(action)
             setTime = time.time()  # Reset time
             
             # Thread-safe access
@@ -87,6 +87,7 @@ if st.session_state.show_camera:
                 success_container["names"] = logged_names
                 success_container["unknown_count"]  = unknown_count
                 success_container["already_checked_in"] = already_checked_in
+                success_container["already_checked_out"] = already_checked_out  # Add this line
 
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
@@ -107,11 +108,19 @@ if st.session_state.show_camera:
                 names = ', '.join(success_container.get("names", []))  # Join recognized names into a string
                 unknown_count = success_container.get("unknown_count", 0)  # Get unknown person count
                 already_checked_in = ', '.join(success_container.get("already_checked_in", []))  # Already marked names
+                already_checked_out = ', '.join(success_container.get("already_checked_out", []))  # Already checked out names
 
                 if already_checked_in:
                     info_message = f"Already marked: {already_checked_in}"
                     success_placeholder.info(info_message)  # Show "Already marked" message
-                elif names:
+                
+                # Display already checked out names
+                if already_checked_out:
+                    info_message = f"Already checked out: {already_checked_out}"
+                    success_placeholder.warning(info_message)  # Show "Already checked out" message
+
+                # If there are new names logged
+                if names and not already_checked_in and not already_checked_out:
                     success_message = f"Data has been successfully saved! Names: {names}"
                     success_placeholder.success(success_message)
 
