@@ -116,6 +116,7 @@ if st.session_state.show_camera:
                 names = ', '.join(success_container.get("names", []))  # Join recognized names into a string
                 unknown_count = success_container.get("unknown_count", 0)  # Get unknown person count
                 success_message = f"Data has been successfully saved! Names: {names}"
+                components.html("<script>playSuccess();</script>", height=0)  # Play success sound
                 if unknown_count > 0:
                     success_message += f" | Unknown Persons Detected: {unknown_count}"
                     components.html("<script>playError();</script>", height=0)  # Play error sound
