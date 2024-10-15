@@ -121,7 +121,7 @@ class RealTimePred:
         current_logs = r.lrange('attendance:logs', 0, -1)
         existing_entries = {log.decode().split('@')[0]: log.decode().split('@')[3] for log in current_logs}  # Set of names already logged
 
-        for name, role, ctime, action in zip(name_list, role_list, ctime_list, action_list):
+        for name, role, ctime in zip(name_list, role_list, ctime_list):
             if name != 'Unknown':
                 if action == "Check In":
                     if name in existing_entries and existing_entries[name] == "Check In":
@@ -140,7 +140,6 @@ class RealTimePred:
                         encoded_data.append(concat_string)
                         logged_names.append(name)
                         # Optionally: Update existing_entries[name] to "Check Out" (for future reference)
-                        existing_entries[name] = "Check Out"  # Update the state (not really needed as it's not stored in Redis)
                 else:
                  unknown_count += 1
                  
