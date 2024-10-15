@@ -109,8 +109,8 @@ if st.session_state.show_camera:
                 already_checked_in = ', '.join(success_container.get("already_checked_in", []))  # Already marked names
 
                 if already_checked_in:
-                    success_message = f"Already marked: {already_checked_in}"
-                    success_placeholder.warning(success_message)  # Show "Already marked" message
+                    info_message = f"Already marked: {already_checked_in}"
+                    success_placeholder.info(info_message)  # Show "Already marked" message
                 elif names:
                     success_message = f"Data has been successfully saved! Names: {names}"
                     success_placeholder.success(success_message)
