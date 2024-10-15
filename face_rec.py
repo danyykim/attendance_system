@@ -101,35 +101,61 @@ class RealTimePred:
         
     def saveLogs_redis(self):
     # Step 1: Create a logs DataFrame
-            
         dataframe = pd.DataFrame(self.logs)
-        # Step 2: Drop duplicate information (distinct name)
+
+        # Step 2: Drop duplicate information (distinct name and action)
         dataframe.drop_duplicates(['name', 'action'], inplace=True)
 
-        # Step 3: Push data to Redis database (list)
-        # Encode the data
-        name_list = dataframe['name'].tolist()
-        role_list = dataframe['role'].tolist()
-        ctime_list = dataframe['current_time'].tolist()
-        action_list = dataframe['action'].tolist()
-        encoded_data = []
-        logged_names = []
-        unknown_count = 0
+        # Step 3: Check for duplicates within the last 10 seconds
+        current_time = datetime.now(pytz.timezone('Asia/Kuala_Lumpur'))
+        
+        # Retrieve the last entries from Redis
+        last_entries = r.lrange('attendance:logs', 0, -1)
+        
+        for index, row in dataframe.iterrows():
+            name = row['name']
+            action = row['action']
+            
+            # Skip if the name is 'Unknown'
+            if name == 'Unknown':
+                dataframe.drop(index, inplace=True)
+                continue
 
-        for name, role, ctime, action in zip(name_list, role_list, ctime_list, action_list):
-            if name != 'Unknown':
+            # Check against existing logs for duplicates
+            for entry in last_entries:
+                entry_parts = entry.decode().split('@')
+                entry_name = entry_parts[0]
+                entry_time_str = entry_parts[2]  # Assuming the third part is the timestamp
+                entry_time = datetime.strptime(entry_time_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.timezone('Asia/Kuala_Lumpur'))
+
+                # Check if the same name and within the last 10 seconds
+                if name == entry_name and (current_time - entry_time).total_seconds() < 10:
+                    # Duplicate found, skip logging this entry
+                    dataframe.drop(index, inplace=True)
+                    break
+
+        # Step 4: Prepare the data for Redis
+        if not dataframe.empty:
+            name_list = dataframe['name'].tolist()
+            role_list = dataframe['role'].tolist()
+            ctime_list = dataframe['current_time'].tolist()
+            action_list = dataframe['action'].tolist()
+            encoded_data = []
+            logged_names = []
+            unknown_count = 0
+
+            for name, role, ctime, action in zip(name_list, role_list, ctime_list, action_list):
                 concat_string = f"{name}@{role}@{ctime}@{action}"
                 encoded_data.append(concat_string)
                 logged_names.append(name)
-            else:
-                unknown_count += 1
 
-        if len(encoded_data) > 0:
-            r.lpush('attendance:logs', *encoded_data)
+            if len(encoded_data) > 0:
+                r.lpush('attendance:logs', *encoded_data)
 
-            self.reset_dict() 
-        
+                self.reset_dict()
+            
         return logged_names, unknown_count
+
 
     def face_prediction(self,test_image, dataframe,feature_column,
                             name_role=['Name','Role'],thresh=0.5, action="Check In"):
