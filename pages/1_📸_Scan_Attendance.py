@@ -97,7 +97,7 @@ if st.session_state.show_camera:
 
     success_audio = """
     <audio id="success-sound" src="success-sound.mp3" preload="auto"></audio>
-    <audio id="error-sound" src="error-soundr.mp3" preload="auto"></audio>
+    <audio id="error-sound" src="error-sound.mp3" preload="auto"></audio>
     <script>
     function playSuccess() {
         document.getElementById('success-sound').play();
