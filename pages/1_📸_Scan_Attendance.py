@@ -125,7 +125,6 @@ if st.session_state.show_camera:
                         st.audio(success_audio_path)  # Play success sound
                         st.session_state.audio_played = True
 
-                success_placeholder.success(success_message)
                 time.sleep(5)
                 success_placeholder.empty()
                 success_container["success"] = False  # Reset after showing message
