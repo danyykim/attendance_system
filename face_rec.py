@@ -133,10 +133,14 @@ class RealTimePred:
                 elif action == "Check Out":
                     if name in existing_entries and existing_entries[name] == "Check Out":
                         already_checked_out.append(name)  # User is already checked out
-                    else:
+                    elif name in existing_entries and existing_entries[name] == "Check In":
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
+                        # Update the action to check out in the existing_entries
+                        existing_entries[name] = "Check Out"  # Update the state
+                    else:
+                        already_checked_out.append(name)  # User is not checked in, cannot check out
                 else:
                  unknown_count += 1
                  
