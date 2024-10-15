@@ -173,6 +173,7 @@ class RealTimePred:
                     else:  # Data hasn't been saved yet, keep it green
                         action = "Check In"
                         color = (0, 255, 0)  # Keep it green until saved to logs
+                        already_checked_in = True
                     
         # Step-5: Draw rectangle and label
 

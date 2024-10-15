@@ -84,6 +84,7 @@ if st.session_state.show_camera:
                 success_container["success"] = True
                 success_container["names"] = logged_names
                 success_container["unknown_count"]  = unknown_count
+                success_container["action"] = action
 
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
@@ -95,33 +96,24 @@ if st.session_state.show_camera:
     st.subheader('Status')
     success_placeholder = st.empty()
 
-    success_audio = """
-    <audio id="success-sound" src="success-sound.mp3" preload="auto"></audio>
-    <audio id="error-sound" src="error-sound.mp3" preload="auto"></audio>
-    <script>
-    function playSuccess() {
-        document.getElementById('success-sound').play();
-    }
-    function playError() {
-        document.getElementById('error-sound').play();
-    }
-    </script>
-    """
-    
-    components.html(success_audio)
-
     while ctx.state.playing:
         with lock:
             if success_container["success"]:
                 names = ', '.join(success_container.get("names", []))  # Join recognized names into a string
                 unknown_count = success_container.get("unknown_count", 0)  # Get unknown person count
-                success_message = f"Data has been successfully saved! Names: {names}"
-                components.html("<script>playSuccess();</script>", height=0)  # Play success sound
+                action_status = success_container.get("action", "Unknown")
+                
+                if action_status == "Check In":
+                    success_message = f"Checked In: {names}"
+                elif action_status == "Already Checked In":
+                    success_message = f"Already Checked In: {names}"
+                elif action_status == "Check Out":
+                    success_message = f"Checked Out: {names}"
+                else:
+                    success_message = f"Unknown action for {names}"
+                
                 if unknown_count > 0:
                     success_message += f" | Unknown Persons Detected: {unknown_count}"
-                    components.html("<script>playError();</script>", height=0)  # Play error sound
-                else:
-                    components.html("<script>playSuccess();</script>", height=0)  # Play success sound
 
                 success_placeholder.success(success_message)
                 time.sleep(5)
