@@ -131,16 +131,16 @@ class RealTimePred:
                         encoded_data.append(concat_string)
                         logged_names.append(name)
                 elif action == "Check Out":
-                    if name in existing_entries and existing_entries[name] == "Check Out":
+                    if name not in existing_entries:
+                        already_checked_out.append(name)  # User is not checked in, cannot check out
+                    elif existing_entries[name] == "Check Out":
                         already_checked_out.append(name)  # User is already checked out
-                    elif name in existing_entries and existing_entries[name] == "Check In":
+                    else:  # User is checked in and can check out
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
-                        # Update the action to check out in the existing_entries
-                        existing_entries[name] = "Check Out"  # Update the state
-                    else:
-                        already_checked_out.append(name)  # User is not checked in, cannot check out
+                        # Optionally: Update existing_entries[name] to "Check Out" (for future reference)
+                        existing_entries[name] = "Check Out"  # Update the state (not really needed as it's not stored in Redis)
                 else:
                  unknown_count += 1
                  
