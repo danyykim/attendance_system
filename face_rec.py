@@ -189,7 +189,7 @@ class RealTimePred:
             self.logs['current_time'].append(current_time)
             self.logs['action'].append(action)
             
-        return test_copy, already_checked_in
+        return test_copy
 
 
 #### Registration Form
