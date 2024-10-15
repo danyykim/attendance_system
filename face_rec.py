@@ -117,11 +117,8 @@ class RealTimePred:
         unknown_count = 0
         already_checked_in = []
         
-        if action == "Check In":
-            current_logs = r.lrange('attendance:logs', 0, -1)
-            existing_names = {log.decode().split('@')[0] for log in current_logs}  # Set of names already logged
-        else:
-            existing_names = set()
+        current_logs = r.lrange('attendance:logs', 0, -1)
+        existing_names = {log.decode().split('@')[0] for log in current_logs}  # Set of names already logged
 
         for name, role, ctime, action in zip(name_list, role_list, ctime_list, action_list):
             if name != 'Unknown':
@@ -132,10 +129,15 @@ class RealTimePred:
                         logged_names.append(name)
                     else:
                         already_checked_in.append(name)
+                elif action == "Check Out":
+                    if name in existing_names:
+                        concat_string = f"{name}@{role}@{ctime}@{action}"
+                        encoded_data.append(concat_string)
+                        logged_names.append(name)
+                        existing_names.remove(name)
                 else:
-                    concat_string = f"{name}@{role}@{ctime}@{action}"
-                    encoded_data.append(concat_string)
-                    logged_names.append(name)
+                 unknown_count += 1
+                 
             else:
                 unknown_count += 1
                 
