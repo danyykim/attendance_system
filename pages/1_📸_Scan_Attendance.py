@@ -4,6 +4,7 @@ from streamlit_webrtc import webrtc_streamer
 import av
 import time
 import threading
+import streamlit.components.v1 as components
 
 # Threading lock for thread-safe access
 lock = threading.Lock()
@@ -94,6 +95,21 @@ if st.session_state.show_camera:
     st.subheader('Status')
     success_placeholder = st.empty()
 
+    success_audio = """
+    <audio id="success-sound" src="success-sound.mp3" preload="auto"></audio>
+    <audio id="error-sound" src="error-soundr.mp3" preload="auto"></audio>
+    <script>
+    function playSuccess() {
+        document.getElementById('success-sound').play();
+    }
+    function playError() {
+        document.getElementById('error-sound').play();
+    }
+    </script>
+    """
+    
+    components.html(success_audio)
+
     while ctx.state.playing:
         with lock:
             if success_container["success"]:
@@ -102,6 +118,9 @@ if st.session_state.show_camera:
                 success_message = f"Data has been successfully saved! Names: {names}"
                 if unknown_count > 0:
                     success_message += f" | Unknown Persons Detected: {unknown_count}"
+                    components.html("<script>playError();</script>", height=0)  # Play error sound
+                else:
+                    components.html("<script>playSuccess();</script>", height=0)  # Play success sound
 
                 success_placeholder.success(success_message)
                 time.sleep(5)
