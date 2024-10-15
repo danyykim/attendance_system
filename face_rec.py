@@ -101,31 +101,12 @@ class RealTimePred:
         
     def saveLogs_redis(self):
     # Step 1: Create a logs DataFrame
+            
         dataframe = pd.DataFrame(self.logs)
-
-        # Step 2: Get current time
-        current_time = get_current_time()
-
-        # Step 3: Check for duplicates in logs based on name and time (last 10 seconds)
-        recent_logs = r.lrange('attendance:logs', 0, -1)  # Get all logs
-        recent_names = []
-
-        for log in recent_logs:
-            log_parts = log.decode().split('@')  # Decode and split
-            log_name = log_parts[0]  # First part is the name
-            log_time = log_parts[2]  # Third part is the time
-
-            # Compare times; only consider logs within the last 10 seconds
-            if (datetime.strptime(current_time, "%Y-%m-%d %H:%M:%S") - datetime.strptime(log_time, "%Y-%m-%d %H:%M:%S")).total_seconds() <= 10:
-                recent_names.append(log_name)
-
-        # Step 4: Filter out names already in recent logs
-        dataframe = dataframe[~dataframe['name'].isin(recent_names)]
-
-        # Step 5: Drop duplicate information (distinct name)
+        # Step 2: Drop duplicate information (distinct name)
         dataframe.drop_duplicates(['name', 'action'], inplace=True)
 
-        # Step 6: Push data to Redis database (list)
+        # Step 3: Push data to Redis database (list)
         # Encode the data
         name_list = dataframe['name'].tolist()
         role_list = dataframe['role'].tolist()
@@ -134,21 +115,28 @@ class RealTimePred:
         encoded_data = []
         logged_names = []
         unknown_count = 0
+        already_checked_in = []
+        
+        current_logs = r.lrange('attendance:logs', 0, -1)
+        existing_names = {log.decode().split('@')[0] for log in current_logs}  # Set of names already logged
 
         for name, role, ctime, action in zip(name_list, role_list, ctime_list, action_list):
             if name != 'Unknown':
-                concat_string = f"{name}@{role}@{ctime}@{action}"
-                encoded_data.append(concat_string)
-                logged_names.append(name)
+                if name not in existing_names:  # Check for duplicates
+                    concat_string = f"{name}@{role}@{ctime}@{action}"
+                    encoded_data.append(concat_string)
+                    logged_names.append(name)
+                else:
+                    already_checked_in.append(name)
             else:
                 unknown_count += 1
-
+                
         if len(encoded_data) > 0:
             r.lpush('attendance:logs', *encoded_data)
+
             self.reset_dict() 
-
-        return logged_names, unknown_count
-
+        
+        return logged_names, unknown_count, already_checked_in
 
     def face_prediction(self,test_image, dataframe,feature_column,
                             name_role=['Name','Role'],thresh=0.5, action="Check In"):
