@@ -150,10 +150,32 @@ class RealTimePred:
                                                         name_role=name_role,
                                                         thresh=thresh)
             
-            if person_name == 'Unknown':
-                color =(0,0,255) # bgr
-            else:
-                color = (0,255,0)
+            already_checked_in = False
+            color = (0, 0, 255)  # Red for unknown user
+            
+            if person_name != 'Unknown':
+                # Step-3: Check if the person is already checked in (from Redis status)
+                check_in_status = r.hget('attendance:status', person_name)
+                
+                if check_in_status is None:  # First time check-in
+                    r.hset('attendance:status', person_name, 'checked_in')
+                    action = "Check In"
+                    color = (0, 255, 0)  # Green for valid check-in
+                    already_checked_in = False  # Not yet checked in
+                    
+                else:
+                    # Step-4: Check if the logs have been updated in the last cycle (10 seconds)
+                    if person_name in self.logs['name']:  # This means they've been logged
+                        action = "Already Checked In"
+                        color = (0, 255, 255)  # Yellow for already checked in
+                        already_checked_in = True  # User is already checked in
+                        
+                    else:  # Data hasn't been saved yet, keep it green
+                        action = "Check In"
+                        color = (0, 255, 0)  # Keep it green until saved to logs
+                    
+        # Step-5: Draw rectangle and label
+
 
             cv2.rectangle(test_copy,(x1,y1),(x2,y2),color)
 
@@ -166,7 +188,7 @@ class RealTimePred:
             self.logs['current_time'].append(current_time)
             self.logs['action'].append(action)
             
-        return test_copy
+        return test_copy, already_checked_in
 
 
 #### Registration Form
