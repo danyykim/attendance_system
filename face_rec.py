@@ -148,15 +148,16 @@ class RealTimePred:
                 elif action == "Check Out":
                     # Check if the user hasn't checked in or has already checked out today
                     if name not in existing_entries or current_date not in existing_entries[name]:
-                        already_checked_out.append(name)  # User hasn't checked in today, so they can't check out
+                        # User hasn't checked in today, so they can't check out
+                        already_checked_out.append(name)
                     elif existing_entries[name][current_date] == "Check Out":
-                        already_checked_out.append(name)  # User already checked out today
+                        # User already checked out today, so they can't check out again
+                        already_checked_out.append(name)
                     else:
                         # User is checked in but hasn't checked out today, so proceed with check out
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
-
             else:
                 unknown_count += 1
 
