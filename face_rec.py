@@ -98,11 +98,13 @@ class RealTimePred:
         
     def reset_dict(self):
         self.logs = dict(name=[],role=[],current_time=[], action=[])
-        
+
     def saveLogs_redis(self, action):
+        # Step 1: Create a logs DataFrame
         dataframe = pd.DataFrame(self.logs)
         dataframe.drop_duplicates(['name', 'action'], inplace=True)
 
+        # Step 2: Push data to Redis database
         name_list = dataframe['name'].tolist()
         role_list = dataframe['role'].tolist()
         ctime_list = dataframe['current_time'].tolist()
@@ -114,50 +116,55 @@ class RealTimePred:
         already_checked_in = []
         already_checked_out = []
 
-        # Get current logs from Redis
+        # Step 3: Retrieve current logs from Redis and map by name and date
         current_logs = r.lrange('attendance:logs', 0, -1)
-        existing_entries = {log.decode().split('@')[0]: log.decode().split('@')[3] for log in current_logs}  # Dictionary with name as key and action as value
+        existing_entries = {}
 
-        print(f"Current Redis Entries: {existing_entries}")  # Debugging
+        for log in current_logs:
+            log_decoded = log.decode().split('@')
+            log_name = log_decoded[0]
+            log_date = log_decoded[2].split(' ')[0]  # Extract only the date (e.g., "YYYY-MM-DD")
+            log_action = log_decoded[3]
+            
+            if log_name not in existing_entries:
+                existing_entries[log_name] = {}
+            existing_entries[log_name][log_date] = log_action
 
-        # Process names and actions
+        # Step 4: Process each log entry and check against Redis logs
         for name, role, ctime in zip(name_list, role_list, ctime_list):
             if name != 'Unknown':
+                current_date = ctime.split(' ')[0]  # Get the current date (e.g., "YYYY-MM-DD")
+
+                # Handle "Check In" action
                 if action == "Check In":
-                    # Check if the user is already checked in
-                    if name in existing_entries and existing_entries[name] == "Check In":
-                        already_checked_in.append(name)  # Log the already checked-in user
+                    if name in existing_entries and current_date in existing_entries[name] and existing_entries[name][current_date] == "Check In":
+                        already_checked_in.append(name)  # User already checked in for today
                     else:
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
 
+                # Handle "Check Out" action
                 elif action == "Check Out":
-                    # Check if the user is NOT checked in (i.e., cannot check out without checking in)
-                    if name not in existing_entries:
-                        already_checked_out.append(name)  # Log as trying to check out without checking in
-                        print(f"User {name} not found in Redis, cannot check out.")  # Debugging
-
-                    elif existing_entries[name] == "Check Out":
-                        already_checked_out.append(name)  # Already checked out, cannot check out again
-                        print(f"User {name} is already checked out.")  # Debugging
-
-                    elif existing_entries[name] == "Check In":
-                        # User is checked in, so they can check out
+                    # Check if the user hasn't checked in or has already checked out today
+                    if name not in existing_entries or current_date not in existing_entries[name]:
+                        already_checked_out.append(name)  # User hasn't checked in today, so they can't check out
+                    elif existing_entries[name][current_date] == "Check Out":
+                        already_checked_out.append(name)  # User already checked out today
+                    else:
+                        # User is checked in but hasn't checked out today, so proceed with check out
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
-                        print(f"User {name} checked out successfully.")  # Debugging
-                else:
-                    unknown_count += 1
+
             else:
                 unknown_count += 1
 
-        # Push new entries to Redis
+        # Step 5: Push new entries to Redis and clear logs
         if len(encoded_data) > 0:
             r.lpush('attendance:logs', *encoded_data)
 
-        self.reset_dict()  # Clear logs after saving
+        self.reset_dict()  # Reset after processing
 
         # Return the result
         return logged_names, unknown_count, already_checked_in, already_checked_out
