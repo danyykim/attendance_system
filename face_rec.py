@@ -171,7 +171,10 @@ class RealTimePred:
 
 
     def face_prediction(self,test_image, dataframe,feature_column,
-                            name_role=['Name','Role'],thresh=0.5, action="Check In"):
+                            name_role=['Name','Role'],thresh=0.5, action=None):
+        
+        if action is None:
+            raise ValueError("Action must be provided ('Check In' or 'Check Out').")
         # step-1: find the time
         current_time = get_current_time()
         
