@@ -121,8 +121,11 @@ if st.session_state.show_camera:
 
                 # If there are new names logged
                 if names and not already_checked_in and not already_checked_out:
-                    success_message = f"Data has been successfully saved! Names: {names}"
-                    success_placeholder.success(success_message)
+                    if action == "Check In":
+                        success_message = f"Data has been successfully saved! Names: {names}"
+                    elif action == "Check Out":
+                        success_message = f"Successfully checked out! Names: {names}"
+                        success_placeholder.success(success_message)
 
                 if unknown_count > 0:
                     success_message += f" | Unknown Persons Detected: {unknown_count}"
