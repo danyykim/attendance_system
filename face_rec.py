@@ -131,7 +131,7 @@ class RealTimePred:
             existing_entries[log_name][log_date] = log_action
 
         # Step 4: Process each log entry and check against Redis logs
-        for name, role, ctime in zip(name_list, role_list, ctime_list):
+        for name, role, ctime, action in zip(name_list, role_list, ctime_list, action_list):
             if name != 'Unknown':
                 current_date = ctime.split(' ')[0]  # Get the current date (e.g., "YYYY-MM-DD")
 
