@@ -146,18 +146,23 @@ class RealTimePred:
 
                 # Handle "Check Out" action
                 elif action == "Check Out":
-                    # Check if the user hasn't checked in or has already checked out today
-                    if name not in existing_entries or current_date not in existing_entries[name]:
-                        # User hasn't checked in today, so they can't check out
-                        already_checked_out.append(name)
-                    elif existing_entries[name][current_date] == "Check Out":
-                        # User already checked out today, so they can't check out again
-                        already_checked_out.append(name)
+    # Check if the user hasn't checked in today
+                    if name not in existing_entries:
+                        already_checked_out.append(name)  # User hasn't checked in today, so they can't check out
                     else:
-                        # User is checked in but hasn't checked out today, so proceed with check out
-                        concat_string = f"{name}@{role}@{ctime}@{action}"
-                        encoded_data.append(concat_string)
-                        logged_names.append(name)
+                        # User has checked in, now check if they have already checked out
+                        if current_date in existing_entries[name]:
+                            if existing_entries[name][current_date] == "Check Out":
+                                already_checked_out.append(name)  # User already checked out today
+                            else:
+                                # Proceed with check out since they have checked in but not checked out yet
+                                concat_string = f"{name}@{role}@{ctime}@{action}"
+                                encoded_data.append(concat_string)
+                                logged_names.append(name)
+                        else:
+                            # If there is no entry for the current date, it means they haven't checked in
+                            already_checked_out.append(name)
+
             else:
                 unknown_count += 1
 
