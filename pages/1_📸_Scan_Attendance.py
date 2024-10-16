@@ -116,10 +116,8 @@ if st.session_state.show_camera:
                 
                 # Display already checked out names
                 if already_checked_out:
-                    success_message = f"Names already checked out: {already_checked_out}"
-                else:
-                    success_message = f"Successfully checked out! Names: {names}"
-
+                    info_message = f"Already checked out: {already_checked_out}"
+                    success_placeholder.warning(info_message)  # Show "Already checked out" message
 
                 # If there are new names logged
                 if names and not already_checked_in and not already_checked_out:
