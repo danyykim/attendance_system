@@ -100,57 +100,68 @@ class RealTimePred:
         self.logs = dict(name=[],role=[],current_time=[], action=[])
         
     def saveLogs_redis(self, action):
-    # Step 1: Create a logs DataFrame
-            
         dataframe = pd.DataFrame(self.logs)
-        # Step 2: Drop duplicate information (distinct name)
         dataframe.drop_duplicates(['name', 'action'], inplace=True)
 
-        # Step 3: Push data to Redis database (list)
-        # Encode the data
         name_list = dataframe['name'].tolist()
         role_list = dataframe['role'].tolist()
         ctime_list = dataframe['current_time'].tolist()
+        action_list = dataframe['action'].tolist()
+
         encoded_data = []
         logged_names = []
         unknown_count = 0
         already_checked_in = []
         already_checked_out = []
-        
-        current_logs = r.lrange('attendance:logs', 0, -1)
-        existing_entries = {log.decode().split('@')[0]: log.decode().split('@')[3] for log in current_logs}  # Set of names already logged
 
+        # Get current logs from Redis
+        current_logs = r.lrange('attendance:logs', 0, -1)
+        existing_entries = {log.decode().split('@')[0]: log.decode().split('@')[3] for log in current_logs}  # Dictionary with name as key and action as value
+
+        print(f"Current Redis Entries: {existing_entries}")  # Debugging
+
+        # Process names and actions
         for name, role, ctime in zip(name_list, role_list, ctime_list):
             if name != 'Unknown':
                 if action == "Check In":
+                    # Check if the user is already checked in
                     if name in existing_entries and existing_entries[name] == "Check In":
-                        already_checked_in.append(name)  # User is already checked in
+                        already_checked_in.append(name)  # Log the already checked-in user
                     else:
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
+
                 elif action == "Check Out":
+                    # Check if the user is NOT checked in (i.e., cannot check out without checking in)
                     if name not in existing_entries:
-                        already_checked_out.append(name)  # User is not checked in, cannot check out
+                        already_checked_out.append(name)  # Log as trying to check out without checking in
+                        print(f"User {name} not found in Redis, cannot check out.")  # Debugging
+
                     elif existing_entries[name] == "Check Out":
-                        already_checked_out.append(name)  # User is already checked out
-                    else:  # User is checked in and can check out
+                        already_checked_out.append(name)  # Already checked out, cannot check out again
+                        print(f"User {name} is already checked out.")  # Debugging
+
+                    elif existing_entries[name] == "Check In":
+                        # User is checked in, so they can check out
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
-                        # Optionally: Update existing_entries[name] to "Check Out" (for future reference)
+                        print(f"User {name} checked out successfully.")  # Debugging
                 else:
-                 unknown_count += 1
-                 
+                    unknown_count += 1
             else:
                 unknown_count += 1
-                
+
+        # Push new entries to Redis
         if len(encoded_data) > 0:
             r.lpush('attendance:logs', *encoded_data)
 
-            self.reset_dict() 
-        
+        self.reset_dict()  # Clear logs after saving
+
+        # Return the result
         return logged_names, unknown_count, already_checked_in, already_checked_out
+
 
     def face_prediction(self,test_image, dataframe,feature_column,
                             name_role=['Name','Role'],thresh=0.5, action="Check In"):
