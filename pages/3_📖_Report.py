@@ -64,7 +64,8 @@ with tab3:
         if pd.isnull(row['Out_time']):
             return 'Pending'
         else:
-            return row['Out_time'] - row['In_time']
+            duration = row['Out_time'] - row['In_time']
+            return str(duration)
 
     report_df['Duration'] = report_df.apply(calculate_duration, axis=1)
     
