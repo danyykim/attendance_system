@@ -146,10 +146,9 @@ class RealTimePred:
                         encoded_data.append(concat_string)
                         logged_names.append(name)
 
-                # Handle "Check Out" action
                 elif action == "Check Out":
                     print(f"Action: {action}, Name: {name}, Current Date: {current_date}")
-                
+                    
                     if name not in existing_entries or current_date not in existing_entries[name]:
                         print(f"{name} has not checked in today!")
                         already_checked_out.append(name)
@@ -162,7 +161,13 @@ class RealTimePred:
                         encoded_data.append(concat_string)
                         logged_names.append(name)
                         
+                        # Update existing entries after successful check-out
                         existing_entries[name][current_date] = "Check Out"
+                        print(f"Updated entries after check-out: {existing_entries}")  # Add debug log here
+                        
+                        # If using Redis, re-push the updated entries back
+                        r.set('attendance:entries', existing_entries)  # Ensure persistence
+
 
             else:
                 unknown_count += 1
