@@ -166,8 +166,6 @@ class RealTimePred:
                         print(f"Updated entries after check-out: {existing_entries}")  # Add debug log here
                         
                         # If using Redis, re-push the updated entries back
-                        r.set('attendance:entries', existing_entries)  # Ensure persistence
-
 
             else:
                 unknown_count += 1
