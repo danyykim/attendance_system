@@ -56,7 +56,7 @@ if st.session_state.show_camera:
         redis_face_db = face_rec.retrive_data(name='academy:register')
     
 
-    waitTime = 6
+    waitTime = 4
     setTime = time.time()
     realtimepred = face_rec.RealTimePred()
 
@@ -102,6 +102,15 @@ if st.session_state.show_camera:
     success_audio_path = 'success-sound.mp3'  # Replace with correct path if needed
     error_audio_path = 'error-sound.mp3'  # Replace with correct path if needed
 
+    def play_audio(audio_file):
+        audio_html = f"""
+            <audio autoplay>
+            <source src="{audio_file}" type="audio/mpeg">
+            Your browser does not support the audio element.
+            </audio>
+        """
+        st.markdown(audio_html, unsafe_allow_html=True)
+
     while ctx.state.playing:
         with lock:
             if success_container["success"]:
@@ -128,6 +137,7 @@ if st.session_state.show_camera:
                 elif names and action == "Check In" and not already_checked_in:
                     success_message = f"Data has been successfully saved! Names: {names}"
                     success_placeholder.success(success_message)
+                    play_audio(success_audio_path)
 
                 if unknown_count > 0:
                     success_message += f" | Unknown Persons Detected: {unknown_count}"
@@ -139,7 +149,7 @@ if st.session_state.show_camera:
                         st.audio(success_audio_path)  # Play success sound
                         st.session_state.audio_played = True
 
-                time.sleep(5)
+                time.sleep(3)
                 success_placeholder.empty()
                 success_container["success"] = False  # Reset after showing message
         time.sleep(1)
