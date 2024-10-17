@@ -129,6 +129,7 @@ class RealTimePred:
                         already_checked_in.append(name)  # User already checked in today
                     else:
                         # Mark as checked in in Redis
+                        r.delete(f'attendance:{name}:{current_date}:checkout') 
                         r.set(f'attendance:{name}:{current_date}', 'checked_in')
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
@@ -141,6 +142,7 @@ class RealTimePred:
                         already_checked_out.append(name)  # User has not checked in yet
                     else:
                         # Mark as checked out in Redis
+                        r.set(f'attendance:{name}:{current_date}:checkout', 'checked_out')  # Mark as checked out
                         r.delete(f'attendance:{name}:{current_date}')  # Remove check-in status
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
