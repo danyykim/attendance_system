@@ -119,8 +119,13 @@ if st.session_state.show_camera:
                     info_message = f"Already checked out: {already_checked_out}"
                     success_placeholder.warning(info_message)  # Show "Already checked out" message
 
-                # If there are new names logged
-                if names and not already_checked_in and not already_checked_out:
+                # Display success message for first check-out
+                if names and action == "Check Out" and not already_checked_out:
+                    success_message = f"Successfully checked out! Names: {names}"
+                    success_placeholder.success(success_message)
+
+                # Display success message for check-in
+                elif names and action == "Check In" and not already_checked_in:
                     success_message = f"Data has been successfully saved! Names: {names}"
                     success_placeholder.success(success_message)
 
