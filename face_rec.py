@@ -129,11 +129,11 @@ class RealTimePred:
                         already_checked_in.append(name)  # User already checked in today
                     else:
                         # Mark as checked in in Redis
-                        r.delete(f'attendance:{name}:{current_date}')
                         r.set(f'attendance:{name}:{current_date}', 'checked_in')
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
+                        r.delete(f'attendance:{name}:{current_date}')
 
                 # Handle Check Out action
                 elif action == "Check Out":
