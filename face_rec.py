@@ -146,29 +146,33 @@ class RealTimePred:
 
                 # Handle "Check Out" action
                 elif action == "Check Out":
-    # Check if the user hasn't checked in today
-                    if name not in existing_entries:
-                        already_checked_out.append(name)  # User hasn't checked in today, so they can't check out
+                    # Check if the user hasn't checked in or has already checked out today
+                    if name not in existing_entries or current_date not in existing_entries[name]:
+                        # User hasn't checked in today, so they can't check out
+                        already_checked_out.append(name)
+                    elif existing_entries[name][current_date] == "Check Out":
+                        # User already checked out today, so they can't check out again
+                        already_checked_out.append(name)
                     else:
-                        # User has checked in, now check if they have already checked out
-                        if current_date in existing_entries[name]:
-                            if existing_entries[name][current_date] == "Check Out":
-                                already_checked_out.append(name)  # User already checked out today
-                            else:
-                                # Proceed with check out since they have checked in but not checked out yet
-                                concat_string = f"{name}@{role}@{ctime}@{action}"
-                                encoded_data.append(concat_string)
-                                logged_names.append(name)
-                        else:
-                            # If there is no entry for the current date, it means they haven't checked in
-                            already_checked_out.append(name)
-
+                        # User is checked in but hasn't checked out today, so proceed with check out
+                        concat_string = f"{name}@{role}@{ctime}@{action}"
+                        encoded_data.append(concat_string)
+                        logged_names.append(name)
             else:
                 unknown_count += 1
 
+        validated_data = []
+        for log in encoded_data:
+            log_parts = log.split('@')
+            name, role, ctime, action = log_parts
+            current_date = ctime.split(' ')[0]  # Extract date
+            if name in existing_entries and current_date in existing_entries[name]:
+                continue  # Skip if already exists for the current date
+            validated_data.append(log)
+
         # Step 5: Push new entries to Redis and clear logs
-        if len(encoded_data) > 0:
-            r.lpush('attendance:logs', *encoded_data)
+        if len(validated_data) > 0:
+            r.lpush('attendance:logs', *validated_data)
 
         self.reset_dict()  # Reset after processing
 
