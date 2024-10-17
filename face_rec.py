@@ -161,18 +161,10 @@ class RealTimePred:
             else:
                 unknown_count += 1
 
-        validated_data = []
-        for log in encoded_data:
-            log_parts = log.split('@')
-            name, role, ctime, action = log_parts
-            current_date = ctime.split(' ')[0]  # Extract date
-            if name in existing_entries and current_date in existing_entries[name]:
-                continue  # Skip if already exists for the current date
-            validated_data.append(log)
-
+        
         # Step 5: Push new entries to Redis and clear logs
-        if len(validated_data) > 0:
-            r.lpush('attendance:logs', *validated_data)
+        if len(encoded_data) > 0:
+            r.lpush('attendance:logs', *encoded_data)
 
         self.reset_dict()  # Reset after processing
 
