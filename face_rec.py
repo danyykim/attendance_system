@@ -117,7 +117,7 @@ class RealTimePred:
         already_checked_in = []
         already_checked_out = []
 
-        # Step 3: Retrieve current logs from Redis and map by name and date
+        # Step 3: Retrieve current logs from Redis
         current_logs = r.lrange('attendance:logs', 0, -1)
         existing_entries = {}
 
@@ -130,28 +130,34 @@ class RealTimePred:
             if log_name not in existing_entries:
                 existing_entries[log_name] = {}
             existing_entries[log_name][log_date] = log_action
-            
+
         print(f"Existing entries: {existing_entries}")
 
-        # Step 4: Process each log entry and check against Redis logs
+        # Step 4: Process each log entry
         for name, role, ctime, action in zip(name_list, role_list, ctime_list, action_list):
-            if name != 'Unknown':
-                current_date = ctime.split(' ')[0]  # Get the current date (e.g., "YYYY-MM-DD")
+            current_date = ctime.split(' ')[0]  # Get the current date (e.g., "YYYY-MM-DD")
 
-                # Handle "Check In" action
+            if name != 'Unknown':
+                # Check In Logic
                 if action == "Check In":
-                    # If already checked in today, log that they are already marked
-                    if name in existing_entries and current_date in existing_entries[name] and existing_entries[name][current_date] == "Check In":
-                        already_checked_in.append(name)  # User already checked in for today
+                    if name in existing_entries and current_date in existing_entries[name]:
+                        if existing_entries[name][current_date] == "Check In":
+                            already_checked_in.append(name)  # User already checked in for today
+                        else:
+                            # Allow check-in if previously checked out
+                            concat_string = f"{name}@{role}@{ctime}@{action}"
+                            encoded_data.append(concat_string)
+                            logged_names.append(name)
                     else:
+                        # User is checking in for the first time today
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
 
+                # Check Out Logic
                 elif action == "Check Out":
                     print(f"Action: {action}, Name: {name}, Current Date: {current_date}")
 
-                    # Check if the user has checked in today
                     if name not in existing_entries or current_date not in existing_entries[name]:
                         print(f"{name} has not checked in today!")
                         already_checked_out.append(name)
@@ -159,12 +165,12 @@ class RealTimePred:
                         print(f"{name} has already checked out today!")
                         already_checked_out.append(name)
                     else:
-                        print(f"{name} is checked in but not yet checked out. Proceeding with check out.")
+                        print(f"{name} is checked in and proceeding with check out.")
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
-                        
-                        # Update existing entries to reflect check out
+
+                        # Update the Redis log to reflect check out
                         existing_entries[name][current_date] = "Check Out"
                         print(f"Updated entries after check-out: {existing_entries}")
 
@@ -176,6 +182,7 @@ class RealTimePred:
 
         # Return the result
         return logged_names, unknown_count, already_checked_in, already_checked_out
+
 
     def face_prediction(self,test_image, dataframe,feature_column,
                             name_role=['Name','Role'],thresh=0.5, action=None):
