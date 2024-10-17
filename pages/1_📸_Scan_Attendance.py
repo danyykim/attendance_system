@@ -103,8 +103,16 @@ if st.session_state.show_camera:
     error_audio_path = 'error-sound.mp3'  # Replace with correct path if needed
 
     def play_audio(audio_file):
-        audio_bytes = open(audio_file, 'rb').read()
-        st.audio(audio_bytes, format='audio/mp3', autoplay=True)
+        audio_data = open(audio_file, 'rb').read()
+        audio_base64 = f"data:audio/mp3;base64,{audio_data.encode('base64').decode()}"
+        st.markdown(
+            f"""
+            <audio autoplay="true" style="display:none;">
+            <source src="{audio_base64}" type="audio/mp3">
+            </audio>
+            """,
+            unsafe_allow_html=True
+        )
 
     while ctx.state.playing:
         with lock:
