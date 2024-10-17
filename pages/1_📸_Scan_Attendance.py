@@ -141,13 +141,6 @@ if st.session_state.show_camera:
 
                 if unknown_count > 0:
                     success_message += f" | Unknown Persons Detected: {unknown_count}"
-                    if not st.session_state.audio_played:
-                        st.audio(error_audio_path)  # Play error sound
-                        st.session_state.audio_played = True
-                else:
-                    if not st.session_state.audio_played:
-                        st.audio(success_audio_path)  # Play success sound
-                        st.session_state.audio_played = True
 
                 time.sleep(3)
                 success_placeholder.empty()
