@@ -131,6 +131,10 @@ class RealTimePred:
                         # Mark as checked in in Redis
                         r.delete(f'attendance:{name}:{current_date}')  # Clear any existing check-in status
                         r.delete(f'attendance:{name}:{current_date}:checkout') 
+                        
+                        redis_log_key = f'attendance:{name}:{current_date}'
+                        if r.get(redis_log_key):
+                            r.delete(redis_log_key)  # Clear residual logs
                         r.set(f'attendance:{name}:{current_date}', 'checked_in')
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
