@@ -54,7 +54,7 @@ if st.session_state.show_camera:
     # Retrieve data from Redis
     with st.spinner('Retrieving Data from Redis DB ...'):
         redis_face_db = face_rec.retrive_data(name='academy:register')
-    st.success("Data successfully retrieved from Redis")
+    
 
     waitTime = 10
     setTime = time.time()
