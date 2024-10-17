@@ -103,13 +103,8 @@ if st.session_state.show_camera:
     error_audio_path = 'error-sound.mp3'  # Replace with correct path if needed
 
     def play_audio(audio_file):
-        audio_html = f"""
-            <audio autoplay>
-            <source src="{audio_file}" type="audio/mpeg">
-            Your browser does not support the audio element.
-            </audio>
-        """
-        st.markdown(audio_html, unsafe_allow_html=True)
+        audio_bytes = open(audio_file, 'rb').read()
+        st.audio(audio_bytes, format='audio/mp3', autoplay=True)
 
     while ctx.state.playing:
         with lock:
