@@ -51,7 +51,6 @@ if st.session_state.show_camera:
         st.subheader('Check In')
     elif st.session_state.check_out:
         st.subheader('Check Out')
-
     # Retrieve data from Redis
     with st.spinner('Retrieving Data from Redis DB ...'):
         redis_face_db = face_rec.retrive_data(name='academy:register')
@@ -79,7 +78,6 @@ if st.session_state.show_camera:
         difftime = timenow - setTime
 
         if difftime >= waitTime:
-            # Call saveLogs_redis which now checks for duplicate entries
             logged_names, unknown_count, already_checked_in, already_checked_out = realtimepred.saveLogs_redis(action)
             setTime = time.time()  # Reset time
             
@@ -87,7 +85,7 @@ if st.session_state.show_camera:
             with lock:
                 success_container["success"] = True
                 success_container["names"] = logged_names
-                success_container["unknown_count"] = unknown_count
+                success_container["unknown_count"]  = unknown_count
                 success_container["already_checked_in"] = already_checked_in
                 success_container["already_checked_out"] = already_checked_out  # Add this line
 
@@ -112,14 +110,13 @@ if st.session_state.show_camera:
                 already_checked_in = ', '.join(success_container.get("already_checked_in", []))  # Already marked names
                 already_checked_out = ', '.join(success_container.get("already_checked_out", []))  # Already checked out names
 
-                # Inform about already checked-in names
                 if already_checked_in:
-                    info_message = f"Already marked for Check In: {already_checked_in}"
+                    info_message = f"Already marked: {already_checked_in}"
                     success_placeholder.info(info_message)  # Show "Already marked" message
                 
-                # Display already checked-out names
+                # Display already checked out names
                 if already_checked_out:
-                    info_message = f"Already marked for Check Out: {already_checked_out}"
+                    info_message = f"Already checked out: {already_checked_out}"
                     success_placeholder.warning(info_message)  # Show "Already checked out" message
 
                 # If there are new names logged
@@ -139,4 +136,5 @@ if st.session_state.show_camera:
 
                 time.sleep(5)
                 success_placeholder.empty()
-                success_container["success"] = False  # Reset after showing messag
+                success_container["success"] = False  # Reset after showing message
+        time.sleep(1)

@@ -101,7 +101,7 @@ class RealTimePred:
         self.logs = dict(name=[], role=[], current_time=[], action=[])
 
     def saveLogs_redis(self, action):
-        # Step 1: Create a logs DataFrame
+    # Step 1: Create a logs DataFrame
         dataframe = pd.DataFrame(self.logs)
         dataframe.drop_duplicates(['name', 'action'], inplace=True)
 
@@ -138,44 +138,35 @@ class RealTimePred:
             if name != 'Unknown':
                 current_date = ctime.split(' ')[0]  # Get the current date (e.g., "YYYY-MM-DD")
 
-                # Initialize user status if not already done
-                if name not in self.user_status:
-                    self.user_status[name] = {'has_checked_in': False, 'has_checked_out': False}
-
                 # Handle "Check In" action
                 if action == "Check In":
-                    if self.user_status[name]['has_checked_in']:
+                    # If already checked in today, log that they are already marked
+                    if name in existing_entries and current_date in existing_entries[name] and existing_entries[name][current_date] == "Check In":
                         already_checked_in.append(name)  # User already checked in for today
                     else:
-                        if name in existing_entries and current_date in existing_entries[name] and existing_entries[name][current_date] == "Check In":
-                            already_checked_in.append(name)  # User already checked in for today
-                        else:
-                            concat_string = f"{name}@{role}@{ctime}@{action}"
-                            encoded_data.append(concat_string)
-                            logged_names.append(name)
-                            self.user_status[name]['has_checked_in'] = True  # Update status to checked in
+                        concat_string = f"{name}@{role}@{ctime}@{action}"
+                        encoded_data.append(concat_string)
+                        logged_names.append(name)
 
                 elif action == "Check Out":
                     print(f"Action: {action}, Name: {name}, Current Date: {current_date}")
-                    
-                    if self.user_status[name]['has_checked_in'] and not self.user_status[name]['has_checked_out']:
-                        if name in existing_entries and current_date in existing_entries[name] and existing_entries[name][current_date] == "Check Out":
-                            already_checked_out.append(name)  # User has already checked out
-                        else:
-                            concat_string = f"{name}@{role}@{ctime}@{action}"
-                            encoded_data.append(concat_string)
-                            logged_names.append(name)
-                            self.user_status[name]['has_checked_out'] = True  # Update status to checked out
-                            
-                            # Update existing entries after successful check-out
-                            existing_entries[name][current_date] = "Check Out"
-                            print(f"Updated entries after check-out: {existing_entries}")  # Debug log here
-                    else:
-                        print(f"{name} has not checked in today or already checked out!")
-                        already_checked_out.append(name)
 
-            else:
-                unknown_count += 1
+                    # Check if the user has checked in today
+                    if name not in existing_entries or current_date not in existing_entries[name]:
+                        print(f"{name} has not checked in today!")
+                        already_checked_out.append(name)
+                    elif existing_entries[name][current_date] == "Check Out":
+                        print(f"{name} has already checked out today!")
+                        already_checked_out.append(name)
+                    else:
+                        print(f"{name} is checked in but not yet checked out. Proceeding with check out.")
+                        concat_string = f"{name}@{role}@{ctime}@{action}"
+                        encoded_data.append(concat_string)
+                        logged_names.append(name)
+                        
+                        # Update existing entries to reflect check out
+                        existing_entries[name][current_date] = "Check Out"
+                        print(f"Updated entries after check-out: {existing_entries}")
 
         # Step 5: Push new entries to Redis and clear logs
         if len(encoded_data) > 0:
@@ -185,8 +176,6 @@ class RealTimePred:
 
         # Return the result
         return logged_names, unknown_count, already_checked_in, already_checked_out
-
-
 
     def face_prediction(self,test_image, dataframe,feature_column,
                             name_role=['Name','Role'],thresh=0.5, action=None):
