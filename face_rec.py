@@ -133,7 +133,6 @@ class RealTimePred:
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
-                        r.delete(f'attendance:{name}:{current_date}')
 
                 # Handle Check Out action
                 elif action == "Check Out":
@@ -146,6 +145,7 @@ class RealTimePred:
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
+                        r.delete(f'attendance:{name}:{current_date}')
 
         # Step 4: Push new entries to Redis and clear logs
         if len(encoded_data) > 0:
