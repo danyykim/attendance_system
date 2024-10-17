@@ -4,6 +4,7 @@ from streamlit_webrtc import webrtc_streamer
 import av
 import time
 import threading
+import base64
 
 # Threading lock for thread-safe access
 lock = threading.Lock()
@@ -102,17 +103,27 @@ if st.session_state.show_camera:
     success_audio_path = 'success-sound.mp3'  # Replace with correct path if needed
     error_audio_path = 'error-sound.mp3'  # Replace with correct path if needed
 
+# Function to play audio in the background without displaying the audio bar
     def play_audio(audio_file):
-        audio_data = open(audio_file, 'rb').read()
-        audio_base64 = f"data:audio/mp3;base64,{audio_data.encode('base64').decode()}"
+        with open(audio_file, 'rb') as f:
+            audio_data = f.read()  # Read the audio file as bytes
+
+        # Encode the audio data to base64
+        audio_base64 = base64.b64encode(audio_data).decode('utf-8')
+
+        # Create the HTML string to play the audio without showing the bar
+        audio_base64_src = f"data:audio/mp3;base64,{audio_base64}"
+        
+        # Embed the audio in the HTML with autoplay and hidden display
         st.markdown(
             f"""
             <audio autoplay="true" style="display:none;">
-            <source src="{audio_base64}" type="audio/mp3">
+            <source src="{audio_base64_src}" type="audio/mp3">
             </audio>
             """,
             unsafe_allow_html=True
         )
+
 
     while ctx.state.playing:
         with lock:
