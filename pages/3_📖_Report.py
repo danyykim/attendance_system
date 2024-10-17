@@ -3,14 +3,14 @@ from Home import face_rec
 import pandas as pd
 from style import apply_background_style  # Import your styling function
 
-apply_background_style() 
-
 if not st.session_state.get("authentication_status", False):
     st.warning("You must log in first.")
     st.stop()
 
 st.set_page_config(page_title='Reporting', layout='wide')
 st.subheader('Reporting')
+
+apply_background_style() 
 
 name = 'attendance:logs'
 

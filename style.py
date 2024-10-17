@@ -5,8 +5,9 @@ def apply_background_style():
     st.markdown(
         """
         <style>
-        .stApp {
-            background: linear-gradient(to bottom, #FF6A00, #FFB700); /* Adjust colors */
+        .stApp {  
+            background: rgb(45,189,253);
+            background: linear-gradient(0deg, rgba(45,189,253,1) 0%, rgba(228,0,166,1) 100%);
             color: white;
             height: 100vh;
         }
