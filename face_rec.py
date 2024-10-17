@@ -129,6 +129,8 @@ class RealTimePred:
             if log_name not in existing_entries:
                 existing_entries[log_name] = {}
             existing_entries[log_name][log_date] = log_action
+            
+        print(f"Existing entries: {existing_entries}")
 
         # Step 4: Process each log entry and check against Redis logs
         for name, role, ctime, action in zip(name_list, role_list, ctime_list, action_list):
@@ -146,18 +148,20 @@ class RealTimePred:
 
                 # Handle "Check Out" action
                 elif action == "Check Out":
-                    # Check if the user hasn't checked in or has already checked out today
+                    print(f"Action: {action}, Name: {name}, Current Date: {current_date}")
+                
                     if name not in existing_entries or current_date not in existing_entries[name]:
-                        # User hasn't checked in today, so they can't check out
+                        print(f"{name} has not checked in today!")
                         already_checked_out.append(name)
                     elif existing_entries[name][current_date] == "Check Out":
-                        # User already checked out today, so they can't check out again
+                        print(f"{name} has already checked out today!")
                         already_checked_out.append(name)
                     else:
-                        # User is checked in but hasn't checked out today, so proceed with check out
+                        print(f"{name} is checked in but not yet checked out. Proceeding with check out.")
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
+
             else:
                 unknown_count += 1
 
