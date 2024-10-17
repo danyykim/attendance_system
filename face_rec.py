@@ -161,6 +161,8 @@ class RealTimePred:
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
+                        
+                        existing_entries[name][current_date] = "Check Out"
 
             else:
                 unknown_count += 1
