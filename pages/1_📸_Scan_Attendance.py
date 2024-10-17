@@ -70,6 +70,9 @@ if st.session_state.show_camera:
     def video_frame_callback(frame):
         global setTime
         img = frame.to_ndarray(format="bgr24")
+        
+        print(f"Action value inside callback: {action}")
+        
         pred_img = realtimepred.face_prediction(
             img, redis_face_db, 'facial_features', ['Name', 'Role'], thresh=0.5, action=action
         )
