@@ -5,7 +5,9 @@ import av
 import time
 import threading
 import base64
+from style import apply_background_style  # Import your styling function
 
+apply_background_style() 
 # Threading lock for thread-safe access
 lock = threading.Lock()
 success_container = {"success": False}  # Shared container
@@ -57,7 +59,7 @@ if st.session_state.show_camera:
         redis_face_db = face_rec.retrive_data(name='academy:register')
     
 
-    waitTime = 4
+    waitTime = 5
     setTime = time.time()
     realtimepred = face_rec.RealTimePred()
 
@@ -136,16 +138,19 @@ if st.session_state.show_camera:
                 if already_checked_in:
                     info_message = f"Already marked: {already_checked_in}"
                     success_placeholder.info(info_message)  # Show "Already marked" message
+                    play_audio(error_audio_path)
                 
                 # Display already checked out names
                 if already_checked_out:
                     info_message = f"Already checked out: {already_checked_out}"
-                    success_placeholder.warning(info_message)  # Show "Already checked out" message
+                    success_placeholder.info(info_message)  # Show "Already checked out" message
+                    play_audio(error_audio_path)
 
                 # Display success message for first check-out
                 if names and action == "Check Out" and not already_checked_out:
                     success_message = f"Successfully checked out! Names: {names}"
                     success_placeholder.success(success_message)
+                    play_audio(success_audio_path)
 
                 # Display success message for check-in
                 elif names and action == "Check In" and not already_checked_in:
