@@ -56,7 +56,7 @@ if st.session_state.show_camera:
         redis_face_db = face_rec.retrive_data(name='academy:register')
     
 
-    waitTime = 10
+    waitTime = 6
     setTime = time.time()
     realtimepred = face_rec.RealTimePred()
 
