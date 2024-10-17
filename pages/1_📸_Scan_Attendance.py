@@ -4,8 +4,18 @@ from streamlit_webrtc import webrtc_streamer
 import av
 import time
 import threading
+import redis
+import json
 
+hostname = 'redis-10380.c240.us-east-1-3.ec2.redns.redis-cloud.com'
+portnumber = '10380'
+password = '6z4TqpJEaYTnp6dy9renIRjJV3Enlj9i'
+
+r = redis.StrictRedis(host=hostname,
+                      port=portnumber,
+                      password=password)
 # Threading lock for thread-safe access
+existing_entries = {}
 lock = threading.Lock()
 success_container = {"success": False}  # Shared container
 
@@ -67,6 +77,11 @@ if st.session_state.show_camera:
     else:
         action = None
         
+    def save_to_redis(existing_entries):
+        with lock:
+            r.set('attendance:entries', json.dumps(existing_entries))  # Save to Redis
+ 
+        
     def video_frame_callback(frame):
         global setTime
         img = frame.to_ndarray(format="bgr24")
@@ -74,6 +89,7 @@ if st.session_state.show_camera:
             img, redis_face_db, 'facial_features', ['Name', 'Role'], thresh=0.5, action=action
         )
         
+        current_date = time.strftime("%Y-%m-%d") 
         timenow = time.time()
         difftime = timenow - setTime
 
@@ -81,13 +97,40 @@ if st.session_state.show_camera:
             logged_names, unknown_count, already_checked_in, already_checked_out = realtimepred.saveLogs_redis(action)
             setTime = time.time()  # Reset time
             
-            # Thread-safe access
             with lock:
+                for name in logged_names:
+                    if name not in existing_entries:
+                        existing_entries[name] = {}
+
+                    if current_date not in existing_entries[name]:
+                        existing_entries[name][current_date] = None  # No action recorded yet
+
+                    # Check-in logic
+                    if action == "Check In":
+                        # Only mark check-in if not already checked in
+                        if existing_entries[name][current_date] != "Check In":
+                            existing_entries[name][current_date] = "Check In"
+                        else:
+                            already_checked_in.append(name)  # If already checked in, append the name
+
+                    # Check-out logic
+                    elif action == "Check Out":
+                        # Only mark check-out if user checked in but not yet checked out
+                        if existing_entries[name][current_date] == "Check In":
+                            existing_entries[name][current_date] = "Check Out"
+                        else:
+                            already_checked_out.append(name)  # If already checked out, append the name
+
+                # Save updated entries to Redis (thread-safe)
+                redis_thread = threading.Thread(target=save_to_redis, args=(existing_entries,))
+                redis_thread.start()
+
+                # Update success container
                 success_container["success"] = True
                 success_container["names"] = logged_names
-                success_container["unknown_count"]  = unknown_count
+                success_container["unknown_count"] = unknown_count
                 success_container["already_checked_in"] = already_checked_in
-                success_container["already_checked_out"] = already_checked_out  # Add this line
+                success_container["already_checked_out"] = already_checked_out
 
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
