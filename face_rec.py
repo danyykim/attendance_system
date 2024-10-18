@@ -153,6 +153,8 @@ class RealTimePred:
         # Step 4: Push new entries to Redis and clear logs
         if len(encoded_data) > 0:
             r.lpush('attendance:logs', *encoded_data)
+            
+        self.logs.clear()    
 
         self.reset_dict()  # Reset after processing
 
