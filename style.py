@@ -13,17 +13,12 @@ def add_custom_css():
             background: linear-gradient(0deg, rgba(45,189,253,1) 0%, rgba(228,0,166,1) 100%);
             color: white; /* Adjust text color */
         }
+        /* Ensure that success, info, and warning messages are not transparent */
         .stAlert {
-            background-color: rgba(255, 255, 255, 0.85) !important;
-            border-radius: 10px !important;
-        }
-        .stSuccess {
-            background-color: rgba(220, 255, 220, 0.85) !important;
-            color: green !important;
-        }
-        .stInfo {
-            background-color: rgba(220, 240, 255, 0.85) !important;
-            color: blue !important;
+            background-color: rgba(255, 255, 255, 0.9);  /* Set background to white with slight transparency */
+            border-radius: 10px;  /* Optional: Adds rounded corners */
+            color: black;  /* Text color */
+            padding: 10px; /* Adds some padding */
         }
         </style>
         """, unsafe_allow_html=True
