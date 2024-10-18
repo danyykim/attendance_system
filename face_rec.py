@@ -101,11 +101,9 @@ class RealTimePred:
         self.logs = dict(name=[], role=[], current_time=[], action=[])
 
     def saveLogs_redis(self, action):
-    # Step 1: Create a logs DataFrame
+    # Create a logs DataFrame
         dataframe = pd.DataFrame(self.logs)
         dataframe.drop_duplicates(['name', 'action'], inplace=True)
-
-        # Step 2: Push data to Redis database
 
         encoded_data = []
         logged_names = []
@@ -113,51 +111,43 @@ class RealTimePred:
         already_checked_in = []
         already_checked_out = []
 
-        for _, row in dataframe.iterrows():
-            name = row['name']
-            role = row['role']
-            ctime = row['current_time']
-            current_date = ctime.split(' ')[0]
+        for name, role, ctime, action in zip(dataframe['name'], dataframe['role'], dataframe['current_time'], dataframe['action']):
+            current_date = ctime.split(' ')[0]  # Get the current date (e.g., "YYYY-MM-DD")
 
             if name != 'Unknown':
-            # Handle Check In
                 if action == "Check In":
-                    # Check Redis for current check-in status
-                    check_in_status = r.get(f'attendance:{name}:{current_date}')
+                    last_check_in_time = r.get(f'last_check_in:{name}:{current_date}')
+                    
+                    if last_check_in_time:
+                        # If the last check-in was less than 30 minutes ago
+                        last_check_in_time = pd.to_datetime(last_check_in_time.decode('utf-8'))
+                        if (pd.Timestamp.now() - last_check_in_time).total_seconds() < 1800:  # 1800 seconds = 30 minutes
+                            already_checked_in.append(name)
+                            continue  # Skip this iteration
+                    
+                    # Mark as checked in and store the current time
+                    r.set(f'attendance:{name}:{current_date}', 'checked_in')
+                    r.set(f'last_check_in:{name}:{current_date}', ctime)  # Store the current check-in time
+                    concat_string = f"{name}@{role}@{ctime}@{action}"
+                    encoded_data.append(concat_string)
+                    logged_names.append(name)
 
-                    if check_in_status == b'checked_in':
-                        already_checked_in.append(name)  # User already checked in today
-                    else:
-                        # Mark as checked in and clear any previous session data
-                        r.set(f'attendance:{name}:{current_date}', 'checked_in')
-                        concat_string = f"{name}@{role}@{ctime}@Check In"
-                        encoded_data.append(concat_string)
-                        logged_names.append(name)
-
-                # Handle Check Out
                 elif action == "Check Out":
-                    # Check Redis for current check-in status
                     check_in_status = r.get(f'attendance:{name}:{current_date}')
-
                     if check_in_status != b'checked_in':
-                        already_checked_out.append(name)  # User has not checked in yet
+                        already_checked_out.append(name)
                     else:
-                        # Mark as checked out in Redis
                         r.delete(f'attendance:{name}:{current_date}')
-                        concat_string = f"{name}@{role}@{ctime}@Check Out"
+                        concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
 
-        # Step 4: Push new entries to Redis and clear logs
-        if len(encoded_data) > 0:
+        if encoded_data:
             r.lpush('attendance:logs', *encoded_data)
 
         self.reset_dict()  # Reset after processing
 
-        # Return the result
         return logged_names, unknown_count, already_checked_in, already_checked_out
-
-
 
     def face_prediction(self,test_image, dataframe,feature_column,
                             name_role=['Name','Role'],thresh=0.5, action=None):
