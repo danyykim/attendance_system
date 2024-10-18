@@ -110,42 +110,43 @@ class RealTimePred:
         already_checked_in = []
         already_checked_out = []
 
-        check_in_entries = []  # List to store check-in entries
-        check_out_entries = []  # List to store check-out entries
+        # Store the current date
+        current_date = time.strftime("%Y-%m-%d")
 
         for name, role, ctime, action in zip(dataframe['name'], dataframe['role'], dataframe['current_time'], dataframe['action']):
-            current_date = ctime.split(' ')[0]  # Get the current date (e.g., "YYYY-MM-DD")
-
             if name != 'Unknown':
                 if action == "Check In":
+                    # Clear previous check-out data if exists
+                    r.delete(f'last_checkout:{name}:{current_date}')
+
+                    # Check Redis for current check-in status
                     check_in_status = r.get(f'attendance:{name}:{current_date}')
 
                     if check_in_status == b'checked_in':
-                        already_checked_in.append(name)
+                        already_checked_in.append(name)  # User already checked in today
                     else:
-                        # Clear previous check-out data if exists
-                        r.delete(f'last_checkout:{name}:{current_date}')
-
-                        # Mark as checked in
+                        # Mark as checked in and save the new check-in
                         r.set(f'attendance:{name}:{current_date}', 'checked_in')
-                        check_in_entries.append(f"{name}@{role}@{ctime}@{action}")
+                        concat_string = f"{name}@{role}@{ctime}@{action}"
+                        encoded_data.append(concat_string)
+                        logged_names.append(name)
 
                 elif action == "Check Out":
+                    # Check Redis for current check-in status
                     check_in_status = r.get(f'attendance:{name}:{current_date}')
 
                     if check_in_status != b'checked_in':
-                        already_checked_out.append(name)
+                        already_checked_out.append(name)  # User has not checked in yet
                     else:
-                        # Mark as checked out
-                        r.set(f'last_checkout:{name}:{current_date}', ctime)
-                        r.delete(f'attendance:{name}:{current_date}')  # Clear check-in status
-                        check_out_entries.append(f"{name}@{role}@{ctime}@{action}")
+                        # Mark as checked out and clear check-in status
+                        r.delete(f'attendance:{name}:{current_date}')
+                        concat_string = f"{name}@{role}@{ctime}@{action}"
+                        encoded_data.append(concat_string)
+                        logged_names.append(name)
 
-        # Push both entries to Redis
-        if check_in_entries:
-            r.lpush('attendance:checkins', *check_in_entries)
-        if check_out_entries:
-            r.lpush('attendance:checkouts', *check_out_entries)
+        # Push new entries to Redis
+        if encoded_data:
+            r.lpush('attendance:logs', *encoded_data)
 
         self.reset_dict()  # Reset after processing
 
