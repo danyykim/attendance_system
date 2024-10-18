@@ -39,41 +39,40 @@ with tab2:
 with tab3:
     st.subheader('Attendance Report')
 
-    logs_list = load_logs(name=name)
+    # Load check-ins and check-outs separately
+    check_in_logs = load_logs('attendance:checkins')
+    check_out_logs = load_logs('attendance:checkouts')
 
+    # Convert logs to DataFrames
     convert_byte_to_string = lambda x: x.decode("utf-8")
-    logs_list_string = list(map(convert_byte_to_string, logs_list))
-    
-    split_string = lambda x: x.split('@')
-    logs_nested_list = list(map(split_string, logs_list_string))
-    
-    logs_df = pd.DataFrame(logs_nested_list, columns=['Name', 'Role', 'Timestamp', 'Action'])
+    check_in_logs_string = list(map(convert_byte_to_string, check_in_logs))
+    check_out_logs_string = list(map(convert_byte_to_string, check_out_logs))
 
-    logs_df["Timestamp"] = pd.to_datetime(logs_df['Timestamp'], format="%Y-%m-%d %H:%M:%S", errors='coerce')
-    logs_df["Date"] = logs_df['Timestamp'].dt.date
-    
-    # Date selection filter
-    selected_date = st.date_input('Select a date to view the attendance report', pd.to_datetime('today').date())
+    check_in_nested_list = [log.split('@') for log in check_in_logs_string]
+    check_out_nested_list = [log.split('@') for log in check_out_logs_string]
 
-    # Filter the logs based on the selected date
-    filtered_logs_df = logs_df[logs_df['Date'] == selected_date]
-    
-    check_in_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check In'].copy()
-    check_out_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check Out'].copy()    
-    
-    report_df = pd.merge(check_in_df, check_out_df, on=['Name', 'Role', 'Date'], how='left', suffixes=('_in', '_out'))
-    
-    report_df['In_time'] = report_df['Timestamp_in']
-    report_df['Out_time'] = report_df['Timestamp_out'].fillna(pd.NaT)
-  
+    check_in_df = pd.DataFrame(check_in_nested_list, columns=['Name', 'Role', 'Timestamp', 'Action'])
+    check_out_df = pd.DataFrame(check_out_nested_list, columns=['Name', 'Role', 'Timestamp', 'Action'])
+
+    # Convert timestamps to datetime
+    check_in_df["Timestamp"] = pd.to_datetime(check_in_df['Timestamp'], format="%Y-%m-%d %H:%M:%S", errors='coerce')
+    check_out_df["Timestamp"] = pd.to_datetime(check_out_df['Timestamp'], format="%Y-%m-%d %H:%M:%S", errors='coerce')
+
+    # Merge DataFrames on Name and Role
+    report_df = pd.merge(check_in_df, check_out_df, on=['Name', 'Role'], how='left', suffixes=('_in', '_out'))
+
+    # Rename columns for clarity
+    report_df.rename(columns={'Timestamp_in': 'In_time', 'Timestamp_out': 'Out_time'}, inplace=True)
+
     def calculate_duration(row):
         if pd.isnull(row['Out_time']):
             return 'Pending'
         else:
-            duration = row['Out_time'] - row['Timestamp_in']
+            duration = row['Out_time'] - row['In_time']
             return str(duration)
 
     report_df['Duration'] = report_df.apply(calculate_duration, axis=1)
-    
+
     report_df.index += 1  # Shift index to start from 1
-    st.dataframe(report_df[['Name', 'Role', 'Date', 'In_time', 'Out_time', 'Duration']])
+    st.dataframe(report_df[['Name', 'Role', 'In_time', 'Out_time', 'Duration']])
+
