@@ -29,12 +29,12 @@ with tab1:
                 st.error("Data inconsistency: Column lengths do not match!")
 
 with tab2:
-    if st.button('Refresh Logs'): 
-       logs = load_logs(name=name)       
-       st.write(logs)
+    if st.button('Refresh Logs'):
+        logs = load_logs(name=name)       
+        st.write(logs)
        
-       log_count = len(logs)
-       st.write(f"Total logs: {log_count}")
+        log_count = len(logs)
+        st.write(f"Total logs: {log_count}")
 
 with tab3:
     st.subheader('Attendance Report')
@@ -75,8 +75,11 @@ with tab3:
     check_in_df.rename(columns={'Timestamp': 'In_time'}, inplace=True)
     check_out_df.rename(columns={'Timestamp': 'Out_time'}, inplace=True)
 
+    # For multiple check-ins, set the previous out time to None
+    check_in_df['Out_time'] = None
+
     # Merge Check In and Check Out DataFrames using an outer join
-    report_df = pd.merge(check_in_df[['Name', 'Unique_ID', 'Role', 'Date', 'In_time']],
+    report_df = pd.merge(check_in_df[['Name', 'Unique_ID', 'Role', 'Date', 'In_time', 'Out_time']],
                          check_out_df[['Name', 'Unique_ID', 'Role', 'Date', 'Out_time']],
                          on=['Name', 'Unique_ID', 'Role', 'Date'], how='outer')
 
