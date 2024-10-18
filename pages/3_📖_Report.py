@@ -52,8 +52,14 @@ with tab3:
     logs_df["Timestamp"] = pd.to_datetime(logs_df['Timestamp'], format="%Y-%m-%d %H:%M:%S", errors='coerce')
     logs_df["Date"] = logs_df['Timestamp'].dt.date
     
-    check_in_df = logs_df[logs_df['Action'] == 'Check In'].copy()
-    check_out_df = logs_df[logs_df['Action'] == 'Check Out'].copy()
+    # Date selection filter
+    selected_date = st.date_input('Select a date to view the attendance report', pd.to_datetime('today').date())
+
+    # Filter the logs based on the selected date
+    filtered_logs_df = logs_df[logs_df['Date'] == selected_date]
+    
+    check_in_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check In'].copy()
+    check_out_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check Out'].copy()    
     
     report_df = pd.merge(check_in_df, check_out_df, on=['Name', 'Role', 'Date'], how='left', suffixes=('_in', '_out'))
     
