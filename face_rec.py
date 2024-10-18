@@ -115,21 +115,20 @@ class RealTimePred:
 
         for name, role, ctime, action in zip(dataframe['name'], dataframe['role'], dataframe['current_time'], dataframe['action']):
             if name != 'Unknown':
-                if action == "Check In":
-                    # Clear previous check-out data if exists
-                    r.delete(f'last_checkout:{name}:{current_date}')
+                unique_name = f"{name}_{int(time.time())}"  # Create a unique identifier for the name
 
+                if action == "Check In":
                     # Check Redis for current check-in status
                     check_in_status = r.get(f'attendance:{name}:{current_date}')
 
                     if check_in_status == b'checked_in':
                         already_checked_in.append(name)  # User already checked in today
                     else:
-                        # Mark as checked in and save the new check-in
+                        # Mark as checked in and save the new check-in with unique name
                         r.set(f'attendance:{name}:{current_date}', 'checked_in')
-                        concat_string = f"{name}@{role}@{ctime}@{action}"
+                        concat_string = f"{unique_name}@{role}@{ctime}@{action}"  # Use unique name
                         encoded_data.append(concat_string)
-                        logged_names.append(name)
+                        logged_names.append(unique_name)  # Store unique name
 
                 elif action == "Check Out":
                     # Check Redis for current check-in status
@@ -140,9 +139,9 @@ class RealTimePred:
                     else:
                         # Mark as checked out and clear check-in status
                         r.delete(f'attendance:{name}:{current_date}')
-                        concat_string = f"{name}@{role}@{ctime}@{action}"
+                        concat_string = f"{unique_name}@{role}@{ctime}@{action}"  # Use unique name
                         encoded_data.append(concat_string)
-                        logged_names.append(name)
+                        logged_names.append(unique_name)  # Store unique name
 
         # Push new entries to Redis
         if encoded_data:
