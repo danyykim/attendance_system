@@ -29,12 +29,12 @@ with tab1:
                 st.error("Data inconsistency: Column lengths do not match!")
 
 with tab2:
-    if st.button('Refresh Logs'):
-        logs = load_logs(name=name)       
-        st.write(logs)
+    if st.button('Refresh Logs'): 
+       logs = load_logs(name=name)       
+       st.write(logs)
        
-        log_count = len(logs)
-        st.write(f"Total logs: {log_count}")
+       log_count = len(logs)
+       st.write(f"Total logs: {log_count}")
 
 with tab3:
     st.subheader('Attendance Report')
@@ -52,8 +52,13 @@ with tab3:
     # Create DataFrame with proper columns
     logs_df = pd.DataFrame(logs_nested_list, columns=['Unique_Name', 'Role', 'Timestamp', 'Action'])
 
-    # Separate Unique_Name into Name and Unique_ID
-    logs_df[['Name', 'Unique_ID']] = logs_df['Unique_Name'].str.split('_', n=1, expand=True)
+    # Check if Unique_Name contains underscores and handle splitting
+    if logs_df['Unique_Name'].str.contains('_').all():
+        logs_df[['Name', 'Unique_ID']] = logs_df['Unique_Name'].str.split('_', n=1, expand=True)
+    else:
+        # Handle the case where there are no underscores
+        st.warning("Some names do not contain underscores and will be treated as a single entry.")
+        logs_df[['Name', 'Unique_ID']] = logs_df['Unique_Name'].str.split('_', n=1, expand=True, fill_value='')
 
     # Convert Timestamp to datetime
     logs_df["Timestamp"] = pd.to_datetime(logs_df['Timestamp'], format="%Y-%m-%d %H:%M:%S", errors='coerce')
@@ -75,11 +80,8 @@ with tab3:
     check_in_df.rename(columns={'Timestamp': 'In_time'}, inplace=True)
     check_out_df.rename(columns={'Timestamp': 'Out_time'}, inplace=True)
 
-    # Initialize Out_time to None in check_in_df for multiple check-ins
-    check_in_df['Out_time'] = None
-
     # Merge Check In and Check Out DataFrames using an outer join
-    report_df = pd.merge(check_in_df[['Name', 'Unique_ID', 'Role', 'Date', 'In_time', 'Out_time']],
+    report_df = pd.merge(check_in_df[['Name', 'Unique_ID', 'Role', 'Date', 'In_time']],
                          check_out_df[['Name', 'Unique_ID', 'Role', 'Date', 'Out_time']],
                          on=['Name', 'Unique_ID', 'Role', 'Date'], how='outer')
 
