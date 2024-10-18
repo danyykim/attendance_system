@@ -95,62 +95,67 @@ def ml_search_algorithm(dataframe,feature_column,test_vector,
 class RealTimePred:
     def __init__(self):
         self.logs = dict(name=[], role=[], current_time=[], action=[])
+        self.user_status = {}  # Initialize an empty dictionary for user status tracking
 
     def reset_dict(self):
         self.logs = dict(name=[], role=[], current_time=[], action=[])
 
     def saveLogs_redis(self, action):
-        # Step 1: Create a logs DataFrame
+    # Step 1: Create a logs DataFrame
         dataframe = pd.DataFrame(self.logs)
         dataframe.drop_duplicates(['name', 'action'], inplace=True)
 
-        # Step 2: Prepare data for Redis
+        # Step 2: Push data to Redis database
+
         encoded_data = []
         logged_names = []
         unknown_count = 0
         already_checked_in = []
         already_checked_out = []
 
-        # Step 3: Process each log entry
-        for name, role, ctime, action in zip(dataframe['name'], dataframe['role'], dataframe['current_time'], dataframe['action']):
-            current_date = ctime.split(' ')[0]  # Get the current date (e.g., "YYYY-MM-DD")
+        for _, row in dataframe.iterrows():
+            name = row['name']
+            role = row['role']
+            ctime = row['current_time']
+            current_date = ctime.split(' ')[0]
 
             if name != 'Unknown':
-                check_in_key = f'attendance:{name}:{current_date}'  # Key for check-in status
-                out_time_key = f'out_time:{name}:{current_date}'  # Key for out time
-
+            # Handle Check In
                 if action == "Check In":
-                    # If already checked in, clear previous out time
-                    if r.exists(check_in_key) and r.get(check_in_key) == b'checked_in':
+                    # Check Redis for current check-in status
+                    check_in_status = r.get(f'attendance:{name}:{current_date}')
+
+                    if check_in_status == b'checked_in':
                         already_checked_in.append(name)  # User already checked in today
-                        r.delete(out_time_key)  # Clear previous out time if checking in again
-
-                    # Mark as checked in
-                    r.set(check_in_key, 'checked_in')
-                    concat_string = f"{name}@{role}@{ctime}@{action}"
-                    encoded_data.append(concat_string)
-                    logged_names.append(name)
-
-                elif action == "Check Out":
-                    # Check if user has checked in
-                    if r.get(check_in_key) == b'checked_in':
-                        r.delete(check_in_key)  # Remove check-in status
-                        r.set(out_time_key, ctime)  # Set the out time
-                        concat_string = f"{name}@{role}@{ctime}@{action}"
+                    else:
+                        # Mark as checked in and clear any previous session data
+                        r.set(f'attendance:{name}:{current_date}', 'checked_in')
+                        concat_string = f"{name}@{role}@{ctime}@Check In"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
-                    else:
+
+                # Handle Check Out
+                elif action == "Check Out":
+                    # Check Redis for current check-in status
+                    check_in_status = r.get(f'attendance:{name}:{current_date}')
+
+                    if check_in_status != b'checked_in':
                         already_checked_out.append(name)  # User has not checked in yet
+                    else:
+                        # Mark as checked out in Redis
+                        r.delete(f'attendance:{name}:{current_date}')
+                        concat_string = f"{name}@{role}@{ctime}@Check Out"
+                        encoded_data.append(concat_string)
+                        logged_names.append(name)
 
         # Step 4: Push new entries to Redis and clear logs
         if len(encoded_data) > 0:
             r.lpush('attendance:logs', *encoded_data)
 
-        self.reset_dict()  # Reset logs after processing
+        self.reset_dict()  # Reset after processing
 
         # Return the result
         return logged_names, unknown_count, already_checked_in, already_checked_out
-
 
 
 
