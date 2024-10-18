@@ -113,12 +113,11 @@ class RealTimePred:
         already_checked_in = []
         already_checked_out = []
 
-        # Step 3: Process each log entry
-        for entry in dataframe.itertuples(index=False):
-            name = entry.name
-            role = entry.role
-            ctime = entry.current_time
-            current_date = ctime.split(' ')[0]  # Get the current date
+        for _, row in dataframe.iterrows():
+            name = row['name']
+            role = row['role']
+            ctime = row['current_time']
+            current_date = ctime.split(' ')[0]
 
             if name != 'Unknown':
             # Handle Check In
