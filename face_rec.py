@@ -10,7 +10,7 @@ from sklearn.metrics import pairwise
 # time
 import time
 from datetime import datetime
-import uuid
+
 import os
 
 # Connect to Redis Client
@@ -104,9 +104,6 @@ class RealTimePred:
     # Step 1: Create a logs DataFrame
         dataframe = pd.DataFrame(self.logs)
         dataframe.drop_duplicates(['name', 'action'], inplace=True)
-        
-        def generate_session_id():
-            return str(uuid.uuid4())
 
         # Step 2: Push data to Redis database
         name_list = dataframe['name'].tolist()
@@ -123,26 +120,33 @@ class RealTimePred:
         # Step 3: Process each log entry
         for name, role, ctime, action in zip(name_list, role_list, ctime_list, action_list):
             current_date = ctime.split(' ')[0]  # Get the current date (e.g., "YYYY-MM-DD")
-            session_id = generate_session_id()
 
             if name != 'Unknown':
+            # Handle Check In
                 if action == "Check In":
-                    if r.get(f'attendance:{name}:{current_date}:session') == b'checked_in':
-                        already_checked_in.append(name)
+                    # Check Redis for current check-in status
+                    check_in_status = r.get(f'attendance:{name}:{current_date}')
+
+                    if check_in_status == b'checked_in':
+                        already_checked_in.append(name)  # User already checked in today
                     else:
-                        r.set(f'attendance:{name}:{current_date}:session', 'checked_in')
-                        r.set(f'attendance:{name}:{current_date}:session_id', session_id)  # Store session ID
-                        concat_string = f"{session_id}@{name}@{role}@{ctime}@{action}"
+                        # Mark as checked in and clear any previous session data
+                        r.set(f'attendance:{name}:{current_date}', 'checked_in')
+                        concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
 
+                # Handle Check Out
                 elif action == "Check Out":
-                    if r.get(f'attendance:{name}:{current_date}:session') != b'checked_in':
-                        already_checked_out.append(name)
+                    # Check Redis for current check-in status
+                    check_in_status = r.get(f'attendance:{name}:{current_date}')
+
+                    if check_in_status != b'checked_in':
+                        already_checked_out.append(name)  # User has not checked in yet
                     else:
-                        r.set(f'attendance:{name}:{current_date}:session', 'checked_out')
-                        session_id = r.get(f'attendance:{name}:{current_date}:session_id').decode()  # Retrieve session ID
-                        concat_string = f"{session_id}@{name}@{role}@{ctime}@{action}"
+                        # Mark as checked out in Redis
+                        r.delete(f'attendance:{name}:{current_date}')
+                        concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
 

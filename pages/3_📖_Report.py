@@ -47,7 +47,7 @@ with tab3:
     split_string = lambda x: x.split('@')
     logs_nested_list = list(map(split_string, logs_list_string))
     
-    logs_df = pd.DataFrame(logs_nested_list, columns=['Session ID','Name', 'Role', 'Timestamp', 'Action'])
+    logs_df = pd.DataFrame(logs_nested_list, columns=['Name', 'Role', 'Timestamp', 'Action'])
 
     logs_df["Timestamp"] = pd.to_datetime(logs_df['Timestamp'], format="%Y-%m-%d %H:%M:%S", errors='coerce')
     logs_df["Date"] = logs_df['Timestamp'].dt.date
@@ -64,10 +64,10 @@ with tab3:
     report_df = pd.merge(check_in_df, check_out_df, on=['Name', 'Role', 'Date'], how='left', suffixes=('_in', '_out'))
     
     report_df['In_time'] = report_df['Timestamp_in']
-    report_df['Out_time'] = report_df['Timestamp_out']
-
+    report_df['Out_time'] = report_df.apply(lambda row: row['Timestamp_out'] if pd.notnull(row['Timestamp_out']) else 'Pending', axis=1)
+    
     def calculate_duration(row):
-        if pd.isnull(row['Out_time']):
+        if pd.isnull(row['Out_time'] or row['Out_time'] == 'Pending'):
             return 'Pending'
         else:
             duration = row['Out_time'] - row['In_time']
