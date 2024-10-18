@@ -106,10 +106,6 @@ class RealTimePred:
         dataframe.drop_duplicates(['name', 'action'], inplace=True)
 
         # Step 2: Push data to Redis database
-        name_list = dataframe['name'].tolist()
-        role_list = dataframe['role'].tolist()
-        ctime_list = dataframe['current_time'].tolist()
-        action_list = dataframe['action'].tolist()
 
         encoded_data = []
         logged_names = []
@@ -118,8 +114,11 @@ class RealTimePred:
         already_checked_out = []
 
         # Step 3: Process each log entry
-        for name, role, ctime, action in zip(name_list, role_list, ctime_list, action_list):
-            current_date = ctime.split(' ')[0]  # Get the current date (e.g., "YYYY-MM-DD")
+        for entry in dataframe.itertuples(index=False):
+            name = entry.name
+            role = entry.role
+            ctime = entry.current_time
+            current_date = ctime.split(' ')[0]  # Get the current date
 
             if name != 'Unknown':
             # Handle Check In
@@ -153,8 +152,6 @@ class RealTimePred:
         # Step 4: Push new entries to Redis and clear logs
         if len(encoded_data) > 0:
             r.lpush('attendance:logs', *encoded_data)
-            
-        self.logs.clear()    
 
         self.reset_dict()  # Reset after processing
 
