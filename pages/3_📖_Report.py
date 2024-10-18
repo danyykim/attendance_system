@@ -75,7 +75,7 @@ with tab3:
     check_in_df.rename(columns={'Timestamp': 'In_time'}, inplace=True)
     check_out_df.rename(columns={'Timestamp': 'Out_time'}, inplace=True)
 
-    # For multiple check-ins, set the previous out time to None
+    # Initialize Out_time to None in check_in_df for multiple check-ins
     check_in_df['Out_time'] = None
 
     # Merge Check In and Check Out DataFrames using an outer join
