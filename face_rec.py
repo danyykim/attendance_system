@@ -122,33 +122,30 @@ class RealTimePred:
             current_date = ctime.split(' ')[0]  # Get the current date (e.g., "YYYY-MM-DD")
 
             if name != 'Unknown':
-                # Handle Check In action
+            # Handle Check In
                 if action == "Check In":
                     # Check Redis for current check-in status
-                    if r.get(f'attendance:{name}:{current_date}') == b'checked_in':
+                    check_in_status = r.get(f'attendance:{name}:{current_date}')
+
+                    if check_in_status == b'checked_in':
                         already_checked_in.append(name)  # User already checked in today
                     else:
-                        # Mark as checked in in Redis
-                        r.delete(f'attendance:{name}:{current_date}')  # Clear any existing check-in status
-                        r.delete(f'attendance:{name}:{current_date}:checkout') 
-                        
-                        redis_log_key = f'attendance:{name}:{current_date}'
-                        if r.get(redis_log_key):
-                            r.delete(redis_log_key)  # Clear residual logs
+                        # Mark as checked in and clear any previous session data
                         r.set(f'attendance:{name}:{current_date}', 'checked_in')
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
 
-                # Handle Check Out action
+                # Handle Check Out
                 elif action == "Check Out":
                     # Check Redis for current check-in status
-                    if r.get(f'attendance:{name}:{current_date}') != b'checked_in':
+                    check_in_status = r.get(f'attendance:{name}:{current_date}')
+
+                    if check_in_status != b'checked_in':
                         already_checked_out.append(name)  # User has not checked in yet
                     else:
                         # Mark as checked out in Redis
-                        r.set(f'attendance:{name}:{current_date}:checkout', 'checked_out')  # Mark as checked out
-                        r.delete(f'attendance:{name}:{current_date}')  # Remove check-in status
+                        r.delete(f'attendance:{name}:{current_date}')
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
