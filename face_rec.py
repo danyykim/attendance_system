@@ -121,7 +121,7 @@ class RealTimePred:
                     if last_check_in_time:
                         # If the last check-in was less than 30 minutes ago
                         last_check_in_time = pd.to_datetime(last_check_in_time.decode('utf-8'))
-                        if (pd.Timestamp.now() - last_check_in_time).total_seconds() < 1800:  # 1800 seconds = 30 minutes
+                        if (pd.Timestamp.now() - last_check_in_time).total_seconds() < 20:  # 1800 seconds = 30 minutes
                             already_checked_in.append(name)
                             continue  # Skip this iteration
                     
