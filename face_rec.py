@@ -127,11 +127,9 @@ class RealTimePred:
 
                     if check_in_status == b'checked_in':
                         already_checked_in.append(name)  # User already checked in today
-                        r.delete(f'attendance:{name}:{current_date}:out_time')  # Reset out_time
                     else:
                         # Mark as checked in and clear any previous session data
                         r.set(f'attendance:{name}:{current_date}', 'checked_in')
-                        r.delete(f'attendance:{name}:{current_date}:out_time')
                         concat_string = f"{name}@{role}@{ctime}@Check In"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
