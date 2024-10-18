@@ -64,19 +64,14 @@ with tab3:
     report_df = pd.merge(check_in_df, check_out_df, on=['Name', 'Role', 'Date'], how='left', suffixes=('_in', '_out'))
     
     report_df['In_time'] = report_df['Timestamp_in']
-    report_df['Out_time'] = report_df['Timestamp_out'].apply(lambda x: pd.to_datetime(x, errors='coerce') if pd.notnull(x) else pd.NaT)  
+    report_df['Out_time'] = report_df['Timestamp_out'].fillna(pd.NaT)
   
     def calculate_duration(row):
-    # Ensure that In_time and Out_time are Timestamps
-        in_time = pd.to_datetime(row['In_time'], errors='coerce')
-        out_time = pd.to_datetime(row['Out_time'], errors='coerce')
-
-        if pd.isnull(out_time) or out_time == 'Pending':
+        if pd.isnull(row['Out_time']):
             return 'Pending'
         else:
-            duration = out_time - in_time
+            duration = row['Out_time'] - row['Timestamp_in']
             return str(duration)
-
 
     report_df['Duration'] = report_df.apply(calculate_duration, axis=1)
     
