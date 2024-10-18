@@ -13,35 +13,17 @@ def add_custom_css():
             background: linear-gradient(0deg, rgba(45,189,253,1) 0%, rgba(228,0,166,1) 100%);
             color: white; /* Adjust text color */
         }
-
-        /* Ensure st.success, st.info, st.warning retain their backgrounds */
         .stAlert {
-            background-color: rgba(255, 255, 255, 0.9); /* Slightly opaque white background */
-            border-radius: 10px; /* Rounded corners for better aesthetics */
+            background-color: rgba(255, 255, 255, 0.85) !important;
+            border-radius: 10px !important;
         }
-
-        /* Specific styles for success message */
-        .stAlert[data-baseweb="alert-success"] {
-            background-color: #D4EDDA !important;
-            color: #155724 !important;
+        .stSuccess {
+            background-color: rgba(220, 255, 220, 0.85) !important;
+            color: green !important;
         }
-
-        /* Specific styles for info message */
-        .stAlert[data-baseweb="alert-info"] {
-            background-color: #CCE5FF !important;
-            color: #004085 !important;
-        }
-
-        /* Specific styles for warning message */
-        .stAlert[data-baseweb="alert-warning"] {
-            background-color: #FFF3CD !important;
-            color: #856404 !important;
-        }
-
-        /* Specific styles for error message */
-        .stAlert[data-baseweb="alert-error"] {
-            background-color: #F8D7DA !important;
-            color: #721C24 !important;
+        .stInfo {
+            background-color: rgba(220, 240, 255, 0.85) !important;
+            color: blue !important;
         }
         </style>
         """, unsafe_allow_html=True
