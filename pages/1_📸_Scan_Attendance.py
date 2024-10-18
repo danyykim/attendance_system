@@ -5,10 +5,9 @@ import av
 import time
 import threading
 import base64
-from style import apply_background_style  # Import your styling function
+from style import add_custom_css  # Import your styling function
 
-apply_background_style() 
-# Threading lock for thread-safe access
+add_custom_css()# Threading lock for thread-safe access
 lock = threading.Lock()
 success_container = {"success": False}  # Shared container
 
