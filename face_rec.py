@@ -101,6 +101,7 @@ class RealTimePred:
         self.logs = dict(name=[], role=[], current_time=[], action=[])
 
     def saveLogs_redis(self, action):
+    # Step 1: Create a logs DataFrame
         dataframe = pd.DataFrame(self.logs)
         dataframe.drop_duplicates(['name', 'action'], inplace=True)
 
@@ -110,13 +111,16 @@ class RealTimePred:
         already_checked_in = []
         already_checked_out = []
 
-        # Store the current date
-        current_date = time.strftime("%Y-%m-%d")
-
+        # Step 2: Process each log entry
         for name, role, ctime, action in zip(dataframe['name'], dataframe['role'], dataframe['current_time'], dataframe['action']):
-            if name != 'Unknown':
-                unique_name = f"{name}_{int(time.time())}"  # Create a unique identifier for the name
+            current_date = ctime.split(' ')[0]  # Get the current date (e.g., "YYYY-MM-DD")
 
+            # Create a unique name with a unique ID
+            unique_id = str(int(time.time()))  # Use current timestamp as unique ID
+            unique_name = f"{name}_{unique_id}"
+
+            if name != 'Unknown':
+                # Handle Check In
                 if action == "Check In":
                     # Check Redis for current check-in status
                     check_in_status = r.get(f'attendance:{name}:{current_date}')
@@ -124,12 +128,13 @@ class RealTimePred:
                     if check_in_status == b'checked_in':
                         already_checked_in.append(name)  # User already checked in today
                     else:
-                        # Mark as checked in and save the new check-in with unique name
+                        # Mark as checked in and clear any previous session data
                         r.set(f'attendance:{name}:{current_date}', 'checked_in')
-                        concat_string = f"{unique_name}@{role}@{ctime}@{action}"  # Use unique name
+                        concat_string = f"{unique_name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
-                        logged_names.append(unique_name)  # Store unique name
+                        logged_names.append(name)
 
+                # Handle Check Out
                 elif action == "Check Out":
                     # Check Redis for current check-in status
                     check_in_status = r.get(f'attendance:{name}:{current_date}')
@@ -137,22 +142,20 @@ class RealTimePred:
                     if check_in_status != b'checked_in':
                         already_checked_out.append(name)  # User has not checked in yet
                     else:
-                        # Mark as checked out and clear check-in status
+                        # Mark as checked out in Redis
                         r.delete(f'attendance:{name}:{current_date}')
-                        concat_string = f"{unique_name}@{role}@{ctime}@{action}"  # Use unique name
+                        concat_string = f"{unique_name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
-                        logged_names.append(unique_name)  # Store unique name
+                        logged_names.append(name)
 
-        # Push new entries to Redis
-        if encoded_data:
+        # Step 4: Push new entries to Redis and clear logs
+        if len(encoded_data) > 0:
             r.lpush('attendance:logs', *encoded_data)
 
         self.reset_dict()  # Reset after processing
 
+        # Return the result
         return logged_names, unknown_count, already_checked_in, already_checked_out
-
-
-
 
     def face_prediction(self,test_image, dataframe,feature_column,
                             name_role=['Name','Role'],thresh=0.5, action=None):
