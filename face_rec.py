@@ -116,24 +116,26 @@ class RealTimePred:
             current_date = ctime.split(' ')[0]  # Get the current date (e.g., "YYYY-MM-DD")
 
             if name != 'Unknown':
-                redis_key = f'attendance:{name}:{current_date}'  # Key for Redis
+                check_in_key = f'attendance:{name}:{current_date}'  # Key for check-in status
+                out_time_key = f'out_time:{name}:{current_date}'  # Key for out time
 
                 if action == "Check In":
-                    # If already checked in, reset the out time
-                    if r.exists(redis_key) and r.get(redis_key) == b'checked_in':
+                    # If already checked in, clear previous out time
+                    if r.exists(check_in_key) and r.get(check_in_key) == b'checked_in':
                         already_checked_in.append(name)  # User already checked in today
-                        r.delete(f'out_time:{name}:{current_date}')  # Clear previous out time
+                        r.delete(out_time_key)  # Clear previous out time if checking in again
 
                     # Mark as checked in
-                    r.set(redis_key, 'checked_in')  # Store check-in status in Redis
+                    r.set(check_in_key, 'checked_in')
                     concat_string = f"{name}@{role}@{ctime}@{action}"
                     encoded_data.append(concat_string)
                     logged_names.append(name)
 
                 elif action == "Check Out":
                     # Check if user has checked in
-                    if r.get(redis_key) == b'checked_in':
-                        r.delete(redis_key)  # Remove check-in status
+                    if r.get(check_in_key) == b'checked_in':
+                        r.delete(check_in_key)  # Remove check-in status
+                        r.set(out_time_key, ctime)  # Set the out time
                         concat_string = f"{name}@{role}@{ctime}@{action}"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
