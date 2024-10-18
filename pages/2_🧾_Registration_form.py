@@ -5,9 +5,6 @@ import numpy as np
 from streamlit_webrtc import webrtc_streamer
 import av
 import threading
-from style import apply_background_style  # Import your styling function
-
-apply_background_style() 
 
 if not st.session_state.get("authentication_status", False):
     st.warning("You must log in first.")
