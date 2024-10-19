@@ -95,62 +95,74 @@ def ml_search_algorithm(dataframe,feature_column,test_vector,
 class RealTimePred:
     def __init__(self):
         self.logs = dict(name=[], role=[], current_time=[], action=[])
-        self.user_status = {}  # Initialize an empty dictionary for user status tracking
+        self.current_state = {}  # Initialize an empty dictionary for user status tracking
 
     def reset_dict(self):
         self.logs = dict(name=[], role=[], current_time=[], action=[])
 
     def saveLogs_redis(self, action):
+        # Step 1: Create a logs DataFrame
         dataframe = pd.DataFrame(self.logs)
         dataframe.drop_duplicates(['name', 'action'], inplace=True)
 
-        name_list = dataframe['name'].tolist()
-        role_list = dataframe['role'].tolist()
-        ctime_list = dataframe['current_time'].tolist()
-        action_list = dataframe['action'].tolist()
-
+        # Step 2: Push data to Redis database
         encoded_data = []
         logged_names = []
-        unknown_count = 0
         already_checked_in = []
         already_checked_out = []
+        unknown_count = 0
 
-        for name, role, ctime, action in zip(name_list, role_list, ctime_list, action_list):
-            current_date = ctime.split(' ')[0]  # Extract the date from the timestamp
+        for _, row in dataframe.iterrows():
+            name = row['name']
+            role = row['role']
+            ctime = row['current_time']
+            current_date = ctime.split(' ')[0]
 
             if name != 'Unknown':
-                # Use a unique key for each session based on name and date
-                session_key = f'attendance:{name}:{current_date}'
-
-                # For Check In action
+                # Handle Check In
                 if action == "Check In":
-                    # Fetch all logs for the current session
-                    existing_session = r.lrange(session_key, 0, -1)
+                    # Check if there is already a log for this user for the current day
+                    check_in_status = r.get(f'attendance:{name}:{current_date}')
 
-                    if any(b'Check In' in s for s in existing_session) and not any(b'Check Out' in s for s in existing_session):
-                        already_checked_in.append(name)  # User is already checked in, no check-out yet
+                    if check_in_status == b'checked_in':
+                        already_checked_in.append(name)  # User already checked in today
                     else:
-                        # Mark check-in by pushing to Redis
-                        concat_string = f"{name}@{role}@{ctime}@{action}"
-                        r.lpush(session_key, concat_string)
+                        # Delete any previous logs for this user on the same date
+                        previous_logs = r.lrange('attendance:logs', 0, -1)
+                        for log in previous_logs:
+                            decoded_log = log.decode("utf-8")
+                            log_parts = decoded_log.split('@')
+                            log_name, log_date = log_parts[0], log_parts[2].split(' ')[0]
+                            if log_name == name and log_date == current_date:
+                                r.lrem('attendance:logs', 0, log)
+
+                        # Mark as checked in and store the new log
+                        r.set(f'attendance:{name}:{current_date}', 'checked_in')
+                        concat_string = f"{name}@{role}@{ctime}@Check In"
+                        encoded_data.append(concat_string)
                         logged_names.append(name)
 
-                # For Check Out action
+                # Handle Check Out
                 elif action == "Check Out":
-                    existing_session = r.lrange(session_key, 0, -1)
+                    # Check if the user checked in before on the same day
+                    check_in_status = r.get(f'attendance:{name}:{current_date}')
 
-                    if any(b'Check In' in s for s in existing_session) and not any(b'Check Out' in s for s in existing_session):
-                        # Mark check-out by pushing to Redis
-                        concat_string = f"{name}@{role}@{ctime}@{action}"
-                        r.lpush(session_key, concat_string)
-                        logged_names.append(name)
+                    if check_in_status != b'checked_in':
+                        already_checked_out.append(name)  # User has not checked in yet
                     else:
-                        already_checked_out.append(name)  # No check-in found for this session
+                        # Mark as checked out in Redis and remove the check-in status
+                        r.delete(f'attendance:{name}:{current_date}')
+                        concat_string = f"{name}@{role}@{ctime}@Check Out"
+                        encoded_data.append(concat_string)
+                        logged_names.append(name)
 
+        # Step 4: Push new entries to Redis and clear logs
         if len(encoded_data) > 0:
             r.lpush('attendance:logs', *encoded_data)
 
         self.reset_dict()  # Reset after processing
+
+        # Return the result
         return logged_names, unknown_count, already_checked_in, already_checked_out
 
 
