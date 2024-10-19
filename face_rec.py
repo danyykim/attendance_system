@@ -127,7 +127,7 @@ class RealTimePred:
                     if check_in_status == b'checked_in':
                         already_checked_in.append(name)  # User already checked in today
                     else:
-                        # Delete any previous logs for this user on the same date
+                        # Delete any previous logs for this user on the same date (in active logs)
                         previous_logs = r.lrange('attendance:logs', 0, -1)
                         for log in previous_logs:
                             decoded_log = log.decode("utf-8")
@@ -141,6 +141,9 @@ class RealTimePred:
                         concat_string = f"{name}@{role}@{ctime}@Check In"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
+
+                        # Store in historical logs
+                        r.lpush('attendance:history', concat_string)
 
                 # Handle Check Out
                 elif action == "Check Out":
@@ -156,7 +159,10 @@ class RealTimePred:
                         encoded_data.append(concat_string)
                         logged_names.append(name)
 
-        # Step 4: Push new entries to Redis and clear logs
+                        # Store in historical logs
+                        r.lpush('attendance:history', concat_string)
+
+        # Step 4: Push new entries to active logs
         if len(encoded_data) > 0:
             r.lpush('attendance:logs', *encoded_data)
 
