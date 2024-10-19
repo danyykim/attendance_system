@@ -101,11 +101,13 @@ class RealTimePred:
         self.logs = dict(name=[], role=[], current_time=[], action=[])
 
     def saveLogs_redis(self, action):
-    # Step 1: Create a logs DataFrame
         dataframe = pd.DataFrame(self.logs)
         dataframe.drop_duplicates(['name', 'action'], inplace=True)
 
-        # Step 2: Push data to Redis database
+        name_list = dataframe['name'].tolist()
+        role_list = dataframe['role'].tolist()
+        ctime_list = dataframe['current_time'].tolist()
+        action_list = dataframe['action'].tolist()
 
         encoded_data = []
         logged_names = []
@@ -113,49 +115,44 @@ class RealTimePred:
         already_checked_in = []
         already_checked_out = []
 
-        for _, row in dataframe.iterrows():
-            name = row['name']
-            role = row['role']
-            ctime = row['current_time']
-            current_date = ctime.split(' ')[0]
+        for name, role, ctime, action in zip(name_list, role_list, ctime_list, action_list):
+            current_date = ctime.split(' ')[0]  # Extract the date from the timestamp
 
             if name != 'Unknown':
-            # Handle Check In
+                # Use a unique key for each session based on name and date
+                session_key = f'attendance:{name}:{current_date}'
+
+                # For Check In action
                 if action == "Check In":
-                    # Check Redis for current check-in status
-                    check_in_status = r.get(f'attendance:{name}:{current_date}')
+                    # Fetch all logs for the current session
+                    existing_session = r.lrange(session_key, 0, -1)
 
-                    if check_in_status == b'checked_in':
-                        already_checked_in.append(name)  # User already checked in today
+                    if any(b'Check In' in s for s in existing_session) and not any(b'Check Out' in s for s in existing_session):
+                        already_checked_in.append(name)  # User is already checked in, no check-out yet
                     else:
-                        # Mark as checked in and clear any previous session data
-                        r.set(f'attendance:{name}:{current_date}', 'checked_in')
-                        concat_string = f"{name}@{role}@{ctime}@Check In"
-                        encoded_data.append(concat_string)
+                        # Mark check-in by pushing to Redis
+                        concat_string = f"{name}@{role}@{ctime}@{action}"
+                        r.lpush(session_key, concat_string)
                         logged_names.append(name)
 
-                # Handle Check Out
+                # For Check Out action
                 elif action == "Check Out":
-                    # Check Redis for current check-in status
-                    check_in_status = r.get(f'attendance:{name}:{current_date}')
+                    existing_session = r.lrange(session_key, 0, -1)
 
-                    if check_in_status != b'checked_in':
-                        already_checked_out.append(name)  # User has not checked in yet
-                    else:
-                        # Mark as checked out in Redis
-                        r.delete(f'attendance:{name}:{current_date}')
-                        concat_string = f"{name}@{role}@{ctime}@Check Out"
-                        encoded_data.append(concat_string)
+                    if any(b'Check In' in s for s in existing_session) and not any(b'Check Out' in s for s in existing_session):
+                        # Mark check-out by pushing to Redis
+                        concat_string = f"{name}@{role}@{ctime}@{action}"
+                        r.lpush(session_key, concat_string)
                         logged_names.append(name)
+                    else:
+                        already_checked_out.append(name)  # No check-in found for this session
 
-        # Step 4: Push new entries to Redis and clear logs
         if len(encoded_data) > 0:
             r.lpush('attendance:logs', *encoded_data)
 
         self.reset_dict()  # Reset after processing
-
-        # Return the result
         return logged_names, unknown_count, already_checked_in, already_checked_out
+
 
 
 
