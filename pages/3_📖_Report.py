@@ -63,6 +63,8 @@ with tab3:
     
     report_df = pd.merge(check_in_df, check_out_df, on=['Name', 'Role', 'Date'], how='left', suffixes=('_in', '_out'))
     
+    report_df = report_df[report_df['Timestamp_out'] > report_df['Timestamp_in']]
+    
     report_df['In_time'] = report_df['Timestamp_in']
     report_df['Out_time'] = report_df['Timestamp_out']
   
