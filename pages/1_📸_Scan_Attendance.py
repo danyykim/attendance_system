@@ -12,7 +12,8 @@ set_page_background()
 if not st.session_state.get("authentication_status", False):
     st.warning("You must log in first.")
     st.stop()
-    
+
+set_page_background()    
 lock = threading.Lock()
 success_container = {"success": False}  # Shared container
 
