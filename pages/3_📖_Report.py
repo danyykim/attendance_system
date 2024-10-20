@@ -58,41 +58,28 @@ with tab3:
     # Filter the logs based on the selected date
     filtered_logs_df = logs_df[logs_df['Date'] == selected_date]
     
+    # Sort logs by Name and Timestamp to ensure correct order
     logs_df.sort_values(by=['Name', 'Timestamp'], inplace=True)
     
+    # Separate Check-In and Check-Out entries
     check_in_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check In'].copy()
-    check_out_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check Out'].copy()  
-    
-    if 'Role' not in check_in_df.columns:
-        check_in_df['Role'] = 'Unknown'  # Default to 'Unknown' if missing
-    if 'Role' not in check_out_df.columns:
-        check_out_df['Role'] = 'Unknown'  # Default to 'Unknown' if missing
-    
+    check_out_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check Out'].copy()
+
+    # Now, merge check-ins and check-outs ensuring correct pairing
     report_df = pd.merge_asof(
         check_in_df.sort_values('Timestamp'),
         check_out_df.sort_values('Timestamp'),
         on='Timestamp',
-        by='Name',  # Ensure that it matches by Name
-        direction='forward',  # Only match check-out times that are after check-in times
+        by='Name',  # Match by 'Name'
+        direction='forward',  # Ensure check-outs happen after check-ins
         suffixes=('_in', '_out')
     )
     
-    print(report_df.columns)
+    # Set In_time and Out_time
+    report_df['In_time'] = report_df['Timestamp_in']
+    report_df['Out_time'] = report_df['Timestamp_out']
 
-    # Manually verify and adjust the column references if necessary
-    if 'Timestamp_in' not in report_df.columns:
-        report_df['In_time'] = report_df['Timestamp']
-    else:
-        report_df['In_time'] = report_df['Timestamp_in']
-
-    # Adjust for the out time as well
-    if 'Timestamp_out' not in report_df.columns:
-        report_df['Out_time'] = pd.NaT  # Set as NaT (Not a Time) if there is no corresponding out time
-    else:
-        report_df['Out_time'] = report_df['Timestamp_out']
-  
-    report_df['Date'] = report_df['In_time'].dt.date
-  
+    # Handle cases where check-out is missing (No out time)
     def calculate_duration(row):
         if pd.isnull(row['Out_time']):
             return 'Pending'
@@ -100,11 +87,10 @@ with tab3:
             duration = row['Out_time'] - row['In_time']
             return str(duration)
 
+    # Calculate duration between check-in and check-out
     report_df['Duration'] = report_df.apply(calculate_duration, axis=1)
-    
+
+    # Display the report
     report_df.index += 1  # Shift index to start from 1
-    
-    if 'Role' not in report_df.columns:
-        report_df['Role'] = 'Unknown'
-    
     st.dataframe(report_df[['Name', 'Role', 'Date', 'In_time', 'Out_time', 'Duration']])
+
