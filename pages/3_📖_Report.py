@@ -1,43 +1,19 @@
-import json
-import pandas as pd
 import streamlit as st
 from Home import face_rec
+import pandas as pd
+
+st.set_page_config(page_title='Reporting', layout='wide')
+st.subheader('Reporting')
 
 if not st.session_state.get("authentication_status", False):
     st.warning("You must log in first.")
     st.stop()
-
-st.set_page_config(page_title='Reporting', layout='wide')
-st.subheader('Reporting')
 
 name = 'attendance:logs'
 
 def load_logs(name, end=-1):
     logs_list = face_rec.r.lrange(name, start=0, end=end)
     return logs_list
-
-def store_report_in_redis(report_df):
-    # Convert DataFrame to a dictionary
-    report_dict = report_df.to_dict(orient='records')
-    
-    # Serialize the dictionary to JSON
-    report_json = json.dumps(report_dict)
-    
-    # Store the JSON report in Redis
-    face_rec.r.set('attendance:report', report_json)
-    
-def load_report_from_redis():
-    # Retrieve the JSON report from Redis
-    report_json = face_rec.r.get('attendance:report')
-    
-    if report_json:
-        # Deserialize JSON back into a dictionary
-        report_dict = json.loads(report_json)
-        
-        # Convert dictionary to DataFrame
-        return pd.DataFrame(report_dict)
-    else:
-        return None
 
 tab1, tab2, tab3 = st.tabs(['Registered Data', 'Logs', 'Attendance Report'])
 
@@ -53,64 +29,58 @@ with tab1:
                 st.error("Data inconsistency: Column lengths do not match!")
 
 with tab2:
-    if st.button('Refresh Logs'):
-        logs = load_logs(name=name)
-        st.write(logs)
+    if st.button('Refresh Logs'): 
+       logs = load_logs(name=name)       
+       st.write(logs)
        
-        log_count = len(logs)
-        st.write(f"Total logs: {log_count}")
+       log_count = len(logs)
+       st.write(f"Total logs: {log_count}")
 
 with tab3:
     st.subheader('Attendance Report')
 
-    logs_list = load_logs(name=name)
+    # Step 1: Fetch keys for real-time attendance report from Redis
+    keys = face_rec.r.keys('attendance:report:*')
 
-    convert_byte_to_string = lambda x: x.decode("utf-8")
-    logs_list_string = list(map(convert_byte_to_string, logs_list))
+    # Step 2: Extract real-time report data from Redis
+    report_data = []
+    for key in keys:
+        report_entry = face_rec.r.hgetall(key)
+        if report_entry:
+            report_data.append({
+                'Name': report_entry[b'name'].decode('utf-8'),
+                'Role': report_entry[b'role'].decode('utf-8'),
+                'In_time': report_entry[b'in_time'].decode('utf-8'),
+                'Out_time': report_entry[b'out_time'].decode('utf-8') if b'out_time' in report_entry else None
+            })
     
-    split_string = lambda x: x.split('@')
-    logs_nested_list = list(map(split_string, logs_list_string))
-    
-    logs_df = pd.DataFrame(logs_nested_list, columns=['Unique_Name', 'Role', 'Timestamp', 'Action'])
+    # Step 3: Create a DataFrame for the real-time report data
+    report_df = pd.DataFrame(report_data)
 
-    logs_df["Timestamp"] = pd.to_datetime(logs_df['Timestamp'], format="%Y-%m-%d %H:%M:%S", errors='coerce')
-    logs_df["Date"] = logs_df['Timestamp'].dt.date
+    if not report_df.empty:
+        # Convert timestamps to datetime for formatting
+        report_df['In_time'] = pd.to_datetime(report_df['In_time'], format="%Y-%m-%d %H:%M:%S", errors='coerce')
+        report_df['Out_time'] = pd.to_datetime(report_df['Out_time'], format="%Y-%m-%d %H:%M:%S", errors='coerce')
+        report_df['Date'] = report_df['In_time'].dt.date
     
-    # Date selection filter
-    selected_date = st.date_input('Select a date to view the attendance report', pd.to_datetime('today').date())
+        # Step 4: Date selection filter
+        selected_date = st.date_input('Select a date to view the attendance report', pd.to_datetime('today').date())
+    
+        # Step 5: Filter the logs based on the selected date
+        filtered_report_df = report_df[report_df['Date'] == selected_date]
+    
+        # Step 6: Calculate duration for each entry
+        def calculate_duration(row):
+            if pd.isnull(row['Out_time']):
+                return 'Pending'
+            else:
+                duration = row['Out_time'] - row['In_time']
+                return str(duration)
 
-    # Filter the logs based on the selected date
-    filtered_logs_df = logs_df[logs_df['Date'] == selected_date]
+        filtered_report_df['Duration'] = filtered_report_df.apply(calculate_duration, axis=1)
     
-    check_in_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check In'].copy()
-    check_out_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check Out'].copy()    
-    
-    report_df = pd.merge(check_in_df, check_out_df, on=['Name', 'Role', 'Date'], how='left', suffixes=('_in', '_out'))
-    
-    report_df['In_time'] = report_df['Timestamp_in']
-    report_df['Out_time'] = report_df['Timestamp_out']
-
-    def calculate_duration(row):
-        if pd.isnull(row['Out_time']):
-            return 'Pending'
-        else:
-            duration = row['Out_time'] - row['Timestamp_in']
-            return str(duration)
-
-    report_df['Duration'] = report_df.apply(calculate_duration, axis=1)
-    
-    report_df.index += 1  # Shift index to start from 1
-    st.dataframe(report_df[['Name', 'Role', 'Date', 'In_time', 'Out_time', 'Duration']])
-    
-    # Store the report in Redis after displaying
-    store_report_in_redis(report_df)
-
-    # Button to load report from Redis
-    if st.button('Load Report from Redis'):
-        redis_report_df = load_report_from_redis()
-        
-        if redis_report_df is not None:
-            st.write("Report loaded from Redis:")
-            st.dataframe(redis_report_df)
-        else:
-            st.warning("No report found in Redis.")
+        # Display the filtered report
+        filtered_report_df.index += 1  # Shift index to start from 1
+        st.dataframe(filtered_report_df[['Name', 'Role', 'Date', 'In_time', 'Out_time', 'Duration']])
+    else:
+        st.info("No attendance data available.")

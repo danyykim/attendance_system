@@ -120,7 +120,7 @@ class RealTimePred:
             current_date = ctime.split(' ')[0]
 
             if name != 'Unknown':
-            # Handle Check In
+                # Handle Check In
                 if action == "Check In":
                     # Check Redis for current check-in status
                     check_in_status = r.get(f'attendance:{name}:{current_date}')
@@ -133,6 +133,15 @@ class RealTimePred:
                         concat_string = f"{name}@{role}@{ctime}@Check In"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
+
+                        # Real-time storage for attendance report (key: attendance:report:<name>:<date>)
+                        report_entry = {
+                            'name': name,
+                            'role': role,
+                            'in_time': ctime,
+                            'out_time': None
+                        }
+                        r.hset(f'attendance:report:{name}:{current_date}', mapping=report_entry)
 
                 # Handle Check Out
                 elif action == "Check Out":
@@ -147,6 +156,10 @@ class RealTimePred:
                         concat_string = f"{name}@{role}@{ctime}@Check Out"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
+
+                        # Update real-time attendance report with check-out time
+                        report_key = f'attendance:report:{name}:{current_date}'
+                        r.hset(report_key, 'out_time', ctime)
 
         # Step 4: Push new entries to Redis and clear logs
         if len(encoded_data) > 0:
