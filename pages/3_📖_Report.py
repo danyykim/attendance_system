@@ -1,19 +1,43 @@
+import json
+import pandas as pd
 import streamlit as st
 from Home import face_rec
-import pandas as pd
-
-st.set_page_config(page_title='Reporting', layout='wide')
-st.subheader('Reporting')
 
 if not st.session_state.get("authentication_status", False):
     st.warning("You must log in first.")
     st.stop()
+
+st.set_page_config(page_title='Reporting', layout='wide')
+st.subheader('Reporting')
 
 name = 'attendance:logs'
 
 def load_logs(name, end=-1):
     logs_list = face_rec.r.lrange(name, start=0, end=end)
     return logs_list
+
+def store_report_in_redis(report_df):
+    # Convert DataFrame to a dictionary
+    report_dict = report_df.to_dict(orient='records')
+    
+    # Serialize the dictionary to JSON
+    report_json = json.dumps(report_dict)
+    
+    # Store the JSON report in Redis
+    face_rec.r.set('attendance:report', report_json)
+    
+def load_report_from_redis():
+    # Retrieve the JSON report from Redis
+    report_json = face_rec.r.get('attendance:report')
+    
+    if report_json:
+        # Deserialize JSON back into a dictionary
+        report_dict = json.loads(report_json)
+        
+        # Convert dictionary to DataFrame
+        return pd.DataFrame(report_dict)
+    else:
+        return None
 
 tab1, tab2, tab3 = st.tabs(['Registered Data', 'Logs', 'Attendance Report'])
 
@@ -29,12 +53,12 @@ with tab1:
                 st.error("Data inconsistency: Column lengths do not match!")
 
 with tab2:
-    if st.button('Refresh Logs'): 
-       logs = load_logs(name=name)       
-       st.write(logs)
+    if st.button('Refresh Logs'):
+        logs = load_logs(name=name)
+        st.write(logs)
        
-       log_count = len(logs)
-       st.write(f"Total logs: {log_count}")
+        log_count = len(logs)
+        st.write(f"Total logs: {log_count}")
 
 with tab3:
     st.subheader('Attendance Report')
@@ -47,7 +71,7 @@ with tab3:
     split_string = lambda x: x.split('@')
     logs_nested_list = list(map(split_string, logs_list_string))
     
-    logs_df = pd.DataFrame(logs_nested_list, columns=['Name', 'Role', 'Timestamp', 'Action'])
+    logs_df = pd.DataFrame(logs_nested_list, columns=['Unique_Name', 'Role', 'Timestamp', 'Action'])
 
     logs_df["Timestamp"] = pd.to_datetime(logs_df['Timestamp'], format="%Y-%m-%d %H:%M:%S", errors='coerce')
     logs_df["Date"] = logs_df['Timestamp'].dt.date
@@ -64,8 +88,8 @@ with tab3:
     report_df = pd.merge(check_in_df, check_out_df, on=['Name', 'Role', 'Date'], how='left', suffixes=('_in', '_out'))
     
     report_df['In_time'] = report_df['Timestamp_in']
-    report_df['Out_time'] = report_df['Timestamp_out'] 
-  
+    report_df['Out_time'] = report_df['Timestamp_out']
+
     def calculate_duration(row):
         if pd.isnull(row['Out_time']):
             return 'Pending'
@@ -77,3 +101,16 @@ with tab3:
     
     report_df.index += 1  # Shift index to start from 1
     st.dataframe(report_df[['Name', 'Role', 'Date', 'In_time', 'Out_time', 'Duration']])
+    
+    # Store the report in Redis after displaying
+    store_report_in_redis(report_df)
+
+    # Button to load report from Redis
+    if st.button('Load Report from Redis'):
+        redis_report_df = load_report_from_redis()
+        
+        if redis_report_df is not None:
+            st.write("Report loaded from Redis:")
+            st.dataframe(redis_report_df)
+        else:
+            st.warning("No report found in Redis.")
