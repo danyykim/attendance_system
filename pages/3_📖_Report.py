@@ -65,21 +65,33 @@ with tab3:
     # Separate Check-In and Check-Out actions
     check_in_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check In'].copy()
     check_out_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check Out'].copy()
-    
-    # Merge Check-Ins with Check-Outs using merge_asof to ensure that each check-in pairs with the next check-out
+
+    # Ensure both DataFrames have the same column names before merging
+    check_in_df = check_in_df.rename(columns={"Timestamp": "In_time"})
+    check_out_df = check_out_df.rename(columns={"Timestamp": "Out_time"})
+
+    # Merge Check-Ins with Check-Outs ensuring correct pairing
     report_df = pd.merge_asof(
-        check_in_df.sort_values('Timestamp'),
-        check_out_df.sort_values('Timestamp'),
-        on='Timestamp',
+        check_in_df.sort_values('In_time'),
+        check_out_df.sort_values('Out_time'),
+        left_on='In_time',
+        right_on='Out_time',
         by='Name',
         direction='forward',  # Ensure check-out happens after check-in
         suffixes=('_in', '_out')
     )
-    
-    # Set In_time and Out_time columns
-    report_df['In_time'] = report_df['Timestamp_in']
-    report_df['Out_time'] = report_df['Timestamp_out']
-    
+
+    # Check if the columns exist to avoid KeyError
+    if 'In_time' in report_df.columns:
+        report_df['In_time'] = report_df['In_time']
+    else:
+        report_df['In_time'] = pd.NaT
+
+    if 'Out_time' in report_df.columns:
+        report_df['Out_time'] = report_df['Out_time']
+    else:
+        report_df['Out_time'] = pd.NaT
+
     # Handle cases where no check-out has happened yet
     def calculate_duration(row):
         if pd.isnull(row['Out_time']):
