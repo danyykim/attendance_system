@@ -95,22 +95,23 @@ def ml_search_algorithm(dataframe,feature_column,test_vector,
 class RealTimePred:
     def __init__(self):
         self.logs = dict(name=[], role=[], current_time=[], action=[])
-        self.current_state = {}  # Initialize an empty dictionary for user status tracking
+        self.user_status = {}  # Initialize an empty dictionary for user status tracking
 
     def reset_dict(self):
         self.logs = dict(name=[], role=[], current_time=[], action=[])
 
     def saveLogs_redis(self, action):
-        # Step 1: Create a logs DataFrame
+    # Step 1: Create a logs DataFrame
         dataframe = pd.DataFrame(self.logs)
         dataframe.drop_duplicates(['name', 'action'], inplace=True)
 
         # Step 2: Push data to Redis database
+
         encoded_data = []
         logged_names = []
+        unknown_count = 0
         already_checked_in = []
         already_checked_out = []
-        unknown_count = 0
 
         for _, row in dataframe.iterrows():
             name = row['name']
@@ -119,50 +120,35 @@ class RealTimePred:
             current_date = ctime.split(' ')[0]
 
             if name != 'Unknown':
-                # Handle Check In
+            # Handle Check In
                 if action == "Check In":
-                    # Check if there is already a log for this user for the current day
+                    # Check Redis for current check-in status
                     check_in_status = r.get(f'attendance:{name}:{current_date}')
 
                     if check_in_status == b'checked_in':
                         already_checked_in.append(name)  # User already checked in today
                     else:
-                        # Delete any previous logs for this user on the same date (in active logs)
-                        previous_logs = r.lrange('attendance:logs', 0, -1)
-                        for log in previous_logs:
-                            decoded_log = log.decode("utf-8")
-                            log_parts = decoded_log.split('@')
-                            log_name, log_date = log_parts[0], log_parts[2].split(' ')[0]
-                            if log_name == name and log_date == current_date:
-                                r.lrem('attendance:logs', 0, log)
-
-                        # Mark as checked in and store the new log
+                        # Mark as checked in and clear any previous session data
                         r.set(f'attendance:{name}:{current_date}', 'checked_in')
                         concat_string = f"{name}@{role}@{ctime}@Check In"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
 
-                        # Store in historical logs
-                        r.lpush('attendance:history', concat_string)
-
                 # Handle Check Out
                 elif action == "Check Out":
-                    # Check if the user checked in before on the same day
+                    # Check Redis for current check-in status
                     check_in_status = r.get(f'attendance:{name}:{current_date}')
 
                     if check_in_status != b'checked_in':
                         already_checked_out.append(name)  # User has not checked in yet
                     else:
-                        # Mark as checked out in Redis and remove the check-in status
+                        # Mark as checked out in Redis
                         r.delete(f'attendance:{name}:{current_date}')
                         concat_string = f"{name}@{role}@{ctime}@Check Out"
                         encoded_data.append(concat_string)
                         logged_names.append(name)
 
-                        # Store in historical logs
-                        r.lpush('attendance:history', concat_string)
-
-        # Step 4: Push new entries to active logs
+        # Step 4: Push new entries to Redis and clear logs
         if len(encoded_data) > 0:
             r.lpush('attendance:logs', *encoded_data)
 
@@ -170,7 +156,6 @@ class RealTimePred:
 
         # Return the result
         return logged_names, unknown_count, already_checked_in, already_checked_out
-
 
 
 
