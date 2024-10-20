@@ -51,7 +51,7 @@ with tab3:
 
     # Convert Timestamp to datetime
     logs_df["Timestamp"] = pd.to_datetime(logs_df['Timestamp'], format="%Y-%m-%d %H:%M:%S", errors='coerce')
-    logs_df["Date"] = logs_df['Timestamp'].dt.date
+    logs_df["Date"] = logs_df['Timestamp'].dt.date  # Ensure 'Date' is created from 'Timestamp'
     
     # Date selection filter
     selected_date = st.date_input('Select a date to view the attendance report', pd.to_datetime('today').date())
@@ -65,7 +65,7 @@ with tab3:
     # Separate Check-In and Check-Out actions
     check_in_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check In'].copy()
     check_out_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check Out'].copy()
-
+    
     # Ensure both DataFrames have the same column names before merging
     check_in_df = check_in_df.rename(columns={"Timestamp": "In_time"})
     check_out_df = check_out_df.rename(columns={"Timestamp": "Out_time"})
@@ -81,6 +81,14 @@ with tab3:
         suffixes=('_in', '_out')
     )
 
+    # Ensure 'Role' is preserved after the merge
+    if 'Role_in' in report_df.columns:
+        report_df['Role'] = report_df['Role_in']
+    elif 'Role_out' in report_df.columns:
+        report_df['Role'] = report_df['Role_out']
+    else:
+        report_df['Role'] = 'Unknown'
+
     # Check if the columns exist to avoid KeyError
     if 'In_time' in report_df.columns:
         report_df['In_time'] = report_df['In_time']
@@ -91,6 +99,9 @@ with tab3:
         report_df['Out_time'] = report_df['Out_time']
     else:
         report_df['Out_time'] = pd.NaT
+
+    # Ensure 'Date' is created correctly
+    report_df['Date'] = report_df['In_time'].dt.date
 
     # Handle cases where no check-out has happened yet
     def calculate_duration(row):
