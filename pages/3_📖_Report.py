@@ -49,48 +49,47 @@ with tab3:
     
     logs_df = pd.DataFrame(logs_nested_list, columns=['Name', 'Role', 'Timestamp', 'Action'])
 
+    # Convert Timestamp to datetime
     logs_df["Timestamp"] = pd.to_datetime(logs_df['Timestamp'], format="%Y-%m-%d %H:%M:%S", errors='coerce')
     logs_df["Date"] = logs_df['Timestamp'].dt.date
     
     # Date selection filter
     selected_date = st.date_input('Select a date to view the attendance report', pd.to_datetime('today').date())
 
-    # Filter the logs based on the selected date
+    # Filter logs based on the selected date
     filtered_logs_df = logs_df[logs_df['Date'] == selected_date]
-    
+
     # Sort logs by Name and Timestamp to ensure correct order
-    logs_df.sort_values(by=['Name', 'Timestamp'], inplace=True)
+    filtered_logs_df = filtered_logs_df.sort_values(by=['Name', 'Timestamp'])
     
-    # Separate Check-In and Check-Out entries
+    # Separate Check-In and Check-Out actions
     check_in_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check In'].copy()
     check_out_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check Out'].copy()
-
-    # Now, merge check-ins and check-outs ensuring correct pairing
+    
+    # Merge Check-Ins with Check-Outs using merge_asof to ensure that each check-in pairs with the next check-out
     report_df = pd.merge_asof(
         check_in_df.sort_values('Timestamp'),
         check_out_df.sort_values('Timestamp'),
         on='Timestamp',
-        by='Name',  # Match by 'Name'
-        direction='forward',  # Ensure check-outs happen after check-ins
+        by='Name',
+        direction='forward',  # Ensure check-out happens after check-in
         suffixes=('_in', '_out')
     )
     
-    # Set In_time and Out_time
+    # Set In_time and Out_time columns
     report_df['In_time'] = report_df['Timestamp_in']
     report_df['Out_time'] = report_df['Timestamp_out']
-
-    # Handle cases where check-out is missing (No out time)
+    
+    # Handle cases where no check-out has happened yet
     def calculate_duration(row):
         if pd.isnull(row['Out_time']):
             return 'Pending'
         else:
-            duration = row['Out_time'] - row['In_time']
-            return str(duration)
+            return str(row['Out_time'] - row['In_time'])
 
-    # Calculate duration between check-in and check-out
     report_df['Duration'] = report_df.apply(calculate_duration, axis=1)
 
-    # Display the report
+    # Display the report in the UI
     report_df.index += 1  # Shift index to start from 1
     st.dataframe(report_df[['Name', 'Role', 'Date', 'In_time', 'Out_time', 'Duration']])
 
