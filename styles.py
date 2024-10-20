@@ -1,8 +1,7 @@
 # utils.py (Create this file to store the utility functions)
 import streamlit as st
 
-def set_page_background():
-    page_bg_color = """
+page_bg_color = """
         <style>
         body {
             background: rgb(40,169,218);
@@ -10,4 +9,4 @@ def set_page_background():
         }
         </style>
     """
-    st.markdown(page_bg_color, unsafe_allow_html=True)
+st.markdown(page_bg_color, unsafe_allow_html=True)
