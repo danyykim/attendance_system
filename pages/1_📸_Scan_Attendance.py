@@ -5,10 +5,7 @@ import av
 import time
 import threading
 import base64
-from styles import set_page_background
 
-# Apply background color
-set_page_background()
 if not st.session_state.get("authentication_status", False):
     st.warning("You must log in first.")
     st.stop()
