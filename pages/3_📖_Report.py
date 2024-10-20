@@ -31,10 +31,6 @@ with tab1:
             if len(redis_face_db['Name']) == len(redis_face_db['Role']) == len(redis_face_db['IC']):
                 redis_face_db.index += 1  # Shift index to start from 1
 
-                # Convert registration date to datetime (assuming you have a 'Registration Date' column)
-                if 'Registration Date' in redis_face_db.columns:
-                    redis_face_db['Registration Date'] = pd.to_datetime(redis_face_db['Registration Date'])
-
                 # Apply the selected filters
                 filtered_data = redis_face_db.copy()
 
@@ -43,7 +39,7 @@ with tab1:
                     filtered_data = filtered_data[filtered_data['Role'] == selected_role]
 
                 # Display the filtered data
-                st.dataframe(filtered_data[['Name', 'Role', 'IC', 'Registration Date']])
+                st.dataframe(filtered_data[['Name', 'Role', 'IC']])
             else:
                 st.error("Data inconsistency: Column lengths do not match!")
 
