@@ -21,7 +21,7 @@ tab1, tab2 = st.tabs(['Registered Data', 'Attendance Report'])
 # Tab 1: Registered Data
 with tab1:
     # Add date filter and role filter
-    selected_role_tab1 = st.selectbox('Filter by Role', ['All', 'Student', 'Teacher'])
+    selected_role_tab1 = st.selectbox('Filter by Role', ['All', 'Student', 'Teacher'], key="role_filter_tab1")
     
     if st.button('Refresh Data'):
         with st.spinner('Retrieving Data from Redis DB ...'):
@@ -61,7 +61,7 @@ with tab2:
     logs_df["Timestamp"] = pd.to_datetime(logs_df['Timestamp'], format="%Y-%m-%d %H:%M:%S", errors='coerce')
     logs_df["Date"] = logs_df['Timestamp'].dt.date  # Ensure 'Date' is created from 'Timestamp'
     
-    selected_role_tab2 = st.selectbox('Filter by Role', ['All', 'Student', 'Teacher'])
+    selected_role_tab2 = st.selectbox('Filter by Role', ['All', 'Student', 'Teacher'], key="role_filter_tab2")
     # Date selection filter
     selected_date = st.date_input('Select a date to view the attendance report', pd.to_datetime('today').date())
 
