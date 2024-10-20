@@ -21,7 +21,6 @@ tab1, tab2 = st.tabs(['Registered Data', 'Attendance Report'])
 # Tab 1: Registered Data
 with tab1:
     # Add date filter and role filter
-    selected_date = st.date_input('Filter by Registration Date')
     selected_role = st.selectbox('Filter by Role', ['All', 'Student', 'Teacher'])
     
     if st.button('Refresh Data'):
@@ -38,10 +37,6 @@ with tab1:
 
                 # Apply the selected filters
                 filtered_data = redis_face_db.copy()
-
-                # Apply date filter
-                if not pd.isnull(selected_date):
-                    filtered_data = filtered_data[filtered_data['Registration Date'].dt.date == selected_date]
 
                 # Apply role filter
                 if selected_role != 'All':
