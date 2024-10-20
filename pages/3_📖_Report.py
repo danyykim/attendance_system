@@ -63,6 +63,11 @@ with tab3:
     check_in_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check In'].copy()
     check_out_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check Out'].copy()  
     
+    if 'Role' not in check_in_df.columns:
+        check_in_df['Role'] = 'Unknown'  # Default to 'Unknown' if missing
+    if 'Role' not in check_out_df.columns:
+        check_out_df['Role'] = 'Unknown'  # Default to 'Unknown' if missing
+    
     report_df = pd.merge_asof(
         check_in_df.sort_values('Timestamp'),
         check_out_df.sort_values('Timestamp'),
@@ -86,6 +91,8 @@ with tab3:
     else:
         report_df['Out_time'] = report_df['Timestamp_out']
   
+    report_df['Date'] = report_df['In_time'].dt.date
+  
     def calculate_duration(row):
         if pd.isnull(row['Out_time']):
             return 'Pending'
@@ -96,4 +103,8 @@ with tab3:
     report_df['Duration'] = report_df.apply(calculate_duration, axis=1)
     
     report_df.index += 1  # Shift index to start from 1
+    
+    if 'Role' not in report_df.columns:
+        report_df['Role'] = 'Unknown'
+    
     st.dataframe(report_df[['Name', 'Role', 'Date', 'In_time', 'Out_time', 'Duration']])
