@@ -61,11 +61,15 @@ with tab2:
     logs_df["Timestamp"] = pd.to_datetime(logs_df['Timestamp'], format="%Y-%m-%d %H:%M:%S", errors='coerce')
     logs_df["Date"] = logs_df['Timestamp'].dt.date  # Ensure 'Date' is created from 'Timestamp'
     
+    selected_role = st.selectbox('Filter by Role', ['All', 'Student', 'Teacher'])
     # Date selection filter
     selected_date = st.date_input('Select a date to view the attendance report', pd.to_datetime('today').date())
 
     # Filter logs based on the selected date
     filtered_logs_df = logs_df[logs_df['Date'] == selected_date]
+
+    if selected_role != 'All':
+            filtered_logs_df = filtered_logs_df[filtered_logs_df['Role'] == selected_role]
 
     # Sort logs by Name and Timestamp to ensure correct order
     filtered_logs_df = filtered_logs_df.sort_values(by=['Name', 'Timestamp'])
