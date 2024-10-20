@@ -103,8 +103,8 @@ if st.session_state.show_camera:
     st.subheader('Status')
     success_placeholder = st.empty()
     
-    success_audio_path = 'success-sound.mp3'  # Replace with correct path if needed
-    error_audio_path = 'error_sound.mp3'  # Replace with correct path if needed
+    success_audio_path = 'sound/success-sound.mp3'  # Replace with correct path if needed
+    error_audio_path = 'sound/error_sound.mp3'  # Replace with correct path if needed
 
 # Function to play audio in the background without displaying the audio bar
     def play_audio(audio_file):
