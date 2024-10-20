@@ -2,12 +2,12 @@ import streamlit as st
 from Home import face_rec
 import pandas as pd
 
+st.set_page_config(page_title='Reporting', layout='wide')
+st.subheader('Reporting')
+
 if not st.session_state.get("authentication_status", False):
     st.warning("You must log in first.")
     st.stop()
-
-st.set_page_config(page_title='Reporting', layout='wide')
-st.subheader('Reporting')
 
 name = 'attendance:logs'
 
@@ -49,7 +49,7 @@ with tab3:
     
     logs_df = pd.DataFrame(logs_nested_list, columns=['Name', 'Role', 'Timestamp', 'Action'])
 
-    logs_df["Timestamp"] = pd.to_datetime(logs_df['Timestamp'], format=" %H:%M:%S", errors='coerce')
+    logs_df["Timestamp"] = pd.to_datetime(logs_df['Timestamp'], format="%Y-%m-%d %H:%M:%S", errors='coerce')
     logs_df["Date"] = logs_df['Timestamp'].dt.date
     
     # Date selection filter
