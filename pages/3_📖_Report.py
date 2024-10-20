@@ -58,8 +58,10 @@ with tab3:
     # Filter the logs based on the selected date
     filtered_logs_df = logs_df[logs_df['Date'] == selected_date]
     
-    check_in_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check In'].copy()
-    check_out_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check Out'].copy()    
+    logs_df.sort_values(by=['Name', 'Timestamp'], inplace=True)
+    
+    check_in_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check In']
+    check_out_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check Out']    
     
     report_df = pd.merge(check_in_df, check_out_df, on=['Name', 'Role', 'Date'], how='left', suffixes=('_in', '_out'))
     
@@ -70,7 +72,7 @@ with tab3:
         if pd.isnull(row['Out_time']):
             return 'Pending'
         else:
-            duration = row['Out_time'] - row['Timestamp_in']
+            duration = row['Out_time'] - row['In_time']
             return str(duration)
 
     report_df['Duration'] = report_df.apply(calculate_duration, axis=1)
