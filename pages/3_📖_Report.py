@@ -36,7 +36,7 @@ with tab1:
 
                 # Apply role filter
                 if selected_role_tab1 != 'All':
-                    filtered_data = filtered_data[filtered_data['Role'] == selected_role]
+                    filtered_data = filtered_data[filtered_data['Role'] == selected_role_tab1]
 
                 # Display the filtered data
                 st.dataframe(filtered_data[['Name', 'Role', 'IC']])
@@ -69,7 +69,7 @@ with tab2:
     filtered_logs_df = logs_df[logs_df['Date'] == selected_date]
 
     if selected_role_tab2 != 'All':
-            filtered_logs_df = filtered_logs_df[filtered_logs_df['Role'] == selected_role]
+            filtered_logs_df = filtered_logs_df[filtered_logs_df['Role'] == selected_role_tab2]
 
     # Sort logs by Name and Timestamp to ensure correct order
     filtered_logs_df = filtered_logs_df.sort_values(by=['Name', 'Timestamp'])
