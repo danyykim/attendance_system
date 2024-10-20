@@ -15,28 +15,45 @@ def load_logs(name, end=-1):
     logs_list = face_rec.r.lrange(name, start=0, end=end)
     return logs_list
 
-tab1, tab2, tab3 = st.tabs(['Registered Data', 'Logs', 'Attendance Report'])
+# Tabs: Registered Data and Attendance Report (Removed Logs tab for simplicity)
+tab1, tab2 = st.tabs(['Registered Data', 'Attendance Report'])
 
+# Tab 1: Registered Data
 with tab1:
+    # Add date filter and role filter
+    selected_date = st.date_input('Filter by Registration Date')
+    selected_role = st.selectbox('Filter by Role', ['All', 'Student', 'Teacher'])
+    
     if st.button('Refresh Data'):
         with st.spinner('Retrieving Data from Redis DB ...'):
             redis_face_db = face_rec.retrive_data(name='academy:register')
 
+            # Ensure consistency in the data length
             if len(redis_face_db['Name']) == len(redis_face_db['Role']) == len(redis_face_db['IC']):
                 redis_face_db.index += 1  # Shift index to start from 1
-                st.dataframe(redis_face_db[['Name', 'Role', 'IC']])
+
+                # Convert registration date to datetime (assuming you have a 'Registration Date' column)
+                if 'Registration Date' in redis_face_db.columns:
+                    redis_face_db['Registration Date'] = pd.to_datetime(redis_face_db['Registration Date'])
+
+                # Apply the selected filters
+                filtered_data = redis_face_db.copy()
+
+                # Apply date filter
+                if not pd.isnull(selected_date):
+                    filtered_data = filtered_data[filtered_data['Registration Date'].dt.date == selected_date]
+
+                # Apply role filter
+                if selected_role != 'All':
+                    filtered_data = filtered_data[filtered_data['Role'] == selected_role]
+
+                # Display the filtered data
+                st.dataframe(filtered_data[['Name', 'Role', 'IC', 'Registration Date']])
             else:
                 st.error("Data inconsistency: Column lengths do not match!")
 
+# Tab 2: Attendance Report (similar to the original)
 with tab2:
-    if st.button('Refresh Logs'): 
-       logs = load_logs(name=name)       
-       st.write(logs)
-       
-       log_count = len(logs)
-       st.write(f"Total logs: {log_count}")
-
-with tab3:
     st.subheader('Attendance Report')
 
     logs_list = load_logs(name=name)
@@ -115,4 +132,3 @@ with tab3:
     # Display the report in the UI
     report_df.index += 1  # Shift index to start from 1
     st.dataframe(report_df[['Name', 'Role', 'Date', 'In_time', 'Out_time', 'Duration']])
-
