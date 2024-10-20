@@ -1,7 +1,10 @@
 import streamlit as st
 from Home import face_rec
 import pandas as pd
+from styles import set_page_background
 
+# Apply background color
+set_page_background()
 if not st.session_state.get("authentication_status", False):
     st.warning("You must log in first.")
     st.stop()
