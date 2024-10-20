@@ -72,8 +72,19 @@ with tab3:
         suffixes=('_in', '_out')
     )
     
-    report_df['In_time'] = report_df['Timestamp_in']
-    report_df['Out_time'] = report_df['Timestamp_out']
+    print(report_df.columns)
+
+    # Manually verify and adjust the column references if necessary
+    if 'Timestamp_in' not in report_df.columns:
+        report_df['In_time'] = report_df['Timestamp']
+    else:
+        report_df['In_time'] = report_df['Timestamp_in']
+
+    # Adjust for the out time as well
+    if 'Timestamp_out' not in report_df.columns:
+        report_df['Out_time'] = pd.NaT  # Set as NaT (Not a Time) if there is no corresponding out time
+    else:
+        report_df['Out_time'] = report_df['Timestamp_out']
   
     def calculate_duration(row):
         if pd.isnull(row['Out_time']):
