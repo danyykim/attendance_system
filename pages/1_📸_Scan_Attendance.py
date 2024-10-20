@@ -96,12 +96,7 @@ if st.session_state.show_camera:
         return av.VideoFrame.from_ndarray(pred_img, format="bgr24")
 
     ctx = webrtc_streamer(key="realtimePrediction", video_frame_callback=video_frame_callback, rtc_configuration={
-        "iceServers": [{"urls": ["stun:stun.services.mozilla.com:3478"]}],
-        "realtimePrediction": {
-            "width": {"ideal": 1280},
-            "height": {"ideal": 720},
-            "frameRate": {"ideal": 30}
-        }
+        "iceServers": [{"urls": ["stun:stun.services.mozilla.com:3478"]}]
     })
 
     # Status Update Section
