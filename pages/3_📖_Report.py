@@ -21,7 +21,7 @@ tab1, tab2 = st.tabs(['Registered Data', 'Attendance Report'])
 # Tab 1: Registered Data
 with tab1:
     # Add date filter and role filter
-    selected_role = st.selectbox('Filter by Role', ['All', 'Student', 'Teacher'])
+    selected_role_tab1 = st.selectbox('Filter by Role', ['All', 'Student', 'Teacher'])
     
     if st.button('Refresh Data'):
         with st.spinner('Retrieving Data from Redis DB ...'):
@@ -35,7 +35,7 @@ with tab1:
                 filtered_data = redis_face_db.copy()
 
                 # Apply role filter
-                if selected_role != 'All':
+                if selected_role_tab1 != 'All':
                     filtered_data = filtered_data[filtered_data['Role'] == selected_role]
 
                 # Display the filtered data
@@ -61,14 +61,14 @@ with tab2:
     logs_df["Timestamp"] = pd.to_datetime(logs_df['Timestamp'], format="%Y-%m-%d %H:%M:%S", errors='coerce')
     logs_df["Date"] = logs_df['Timestamp'].dt.date  # Ensure 'Date' is created from 'Timestamp'
     
-    selected_role = st.selectbox('Filter by Role', ['All', 'Student', 'Teacher'])
+    selected_role_tab2 = st.selectbox('Filter by Role', ['All', 'Student', 'Teacher'])
     # Date selection filter
     selected_date = st.date_input('Select a date to view the attendance report', pd.to_datetime('today').date())
 
     # Filter logs based on the selected date
     filtered_logs_df = logs_df[logs_df['Date'] == selected_date]
 
-    if selected_role != 'All':
+    if selected_role_tab2 != 'All':
             filtered_logs_df = filtered_logs_df[filtered_logs_df['Role'] == selected_role]
 
     # Sort logs by Name and Timestamp to ensure correct order
