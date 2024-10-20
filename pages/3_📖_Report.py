@@ -60,10 +60,17 @@ with tab3:
     
     logs_df.sort_values(by=['Name', 'Timestamp'], inplace=True)
     
-    check_in_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check In']
-    check_out_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check Out']    
+    check_in_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check In'].copy()
+    check_out_df = filtered_logs_df[filtered_logs_df['Action'] == 'Check Out'].copy()  
     
-    report_df = pd.merge(check_in_df, check_out_df, on=['Name', 'Role', 'Date'], how='left', suffixes=('_in', '_out'))
+    report_df = pd.merge_asof(
+        check_in_df.sort_values('Timestamp'),
+        check_out_df.sort_values('Timestamp'),
+        on='Timestamp',
+        by='Name',  # Ensure that it matches by Name
+        direction='forward',  # Only match check-out times that are after check-in times
+        suffixes=('_in', '_out')
+    )
     
     report_df['In_time'] = report_df['Timestamp_in']
     report_df['Out_time'] = report_df['Timestamp_out']
