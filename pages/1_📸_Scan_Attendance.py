@@ -14,7 +14,7 @@ lock = threading.Lock()
 success_container = {"success": False}  # Shared container
 
 # Set up the layout with buttons
-st.subheader('Attendance System')
+st.subheader('Attendance System 2')
 
 # Initialize session state if not already done
 if 'show_camera' not in st.session_state:
